@@ -57,7 +57,7 @@ object InjectApi {
     private fun setupDataTransport() {
         // Load DataTransport into System CL
         // Note: Don't use ::class.java because it loads. This should be exclusively on the System CL
-        nativeDefineClass(ClassLoader.getSystemClassLoader(), getClassBytes("rip.sunrise.injectapi.callsite.DataTransport"))
+        nativeDefineClass(ClassLoader.getSystemClassLoader(), getClassBytes("rip/sunrise/injectapi/callsite/DataTransport"))
 
         // Set up the injection CL.
         ClassLoader.getSystemClassLoader()
