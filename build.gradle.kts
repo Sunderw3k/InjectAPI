@@ -1,5 +1,6 @@
 plugins {
     kotlin("jvm") version "2.0.0"
+    id("io.github.goooler.shadow") version "8.1.8"
 }
 
 group = project.property("group") as String
@@ -34,4 +35,5 @@ tasks {
             languageVersion = "2.0"
         }
     }
+    build.get().finalizedBy(shadowJar)
 }
