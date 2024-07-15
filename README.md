@@ -6,7 +6,7 @@ work for that? This library is all you need!
 
 ## Getting Started
 
-Imagine someone made an app, and you want to add performence monitoring, or
+Imagine someone made an app, and you want to add performance monitoring, or
 some kind of logging they didn't provide. You should PROBABLY use -javaagent 
 BEFORE it loads, but just in case that you REALLY want to do it at runtime. You can!
 
@@ -17,7 +17,7 @@ fun main() {
     readln() // Kindly wait for you to attach
     var tickNumber = 0
     while (true) {
-        App.runTick(tickNumber)
+        App.runTick(tickNumber++)
         TimeUnit.SECONDS.sleep(1)
     }
 }
@@ -50,7 +50,7 @@ fun agentmain(args: String?, instrumentation: Instrumentation) {
         )
     // Context is always the first argument. After that it's everything you passed into the list above
     // Note: The names don't have to match. Obviously.
-    ) { ctx: Context, tickNumber: Int
+    ) { _: Context, tickNumber: Int ->
         if (tickNumber % 5 == 0) {
             println("Hello from hook! Current tick is $tickNumber")
         }
