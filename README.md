@@ -55,6 +55,10 @@ fun agentmain(args: String?, instrumentation: Instrumentation) {
             println("Hello from hook! Current tick is $tickNumber")
         }
     })
+
+    // Register the transformer, You can pass in a custom dumper for debugging too.
+    GlobalTransformer().register(instrumentation)
+    InjectApi.transform(instrumentation)
 }
 
 ```
