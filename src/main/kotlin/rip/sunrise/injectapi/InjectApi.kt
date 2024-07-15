@@ -43,7 +43,7 @@ object InjectApi {
         }
 
         // Load ProxyDynamicFactory and Context in all CLs
-        HookManager.getTargetClasses().map { it.classLoader }.distinct().forEach {
+        HookManager.getTargetClasses().map { it.classLoader }.filter { it != InjectApi::class.java.classLoader }.distinct().forEach {
             nativeDefineClass(it, getClassBytes(Type.getInternalName(ProxyDynamicFactory::class.java)))
 
             nativeDefineClass(it, getClassBytes(Type.getInternalName(Context::class.java)))
