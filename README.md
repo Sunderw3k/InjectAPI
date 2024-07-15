@@ -16,7 +16,7 @@ Keep in mind you need instrumentation anyway. So you need to attach a javaagent.
 fun main() {
     readln() // Kindly wait for you to attach
     var tickNumber = 0
-    while (True) {
+    while (true) {
         App.runTick(tickNumber)
         TimeUnit.SECONDS.sleep(1)
     }
