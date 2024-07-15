@@ -1,7 +1,6 @@
 package rip.sunrise.injectapi
 
 import org.objectweb.asm.Type
-import rip.sunrise.injectapi.callsite.DataTransport
 import rip.sunrise.injectapi.callsite.ProxyDynamicFactory
 import rip.sunrise.injectapi.injection.Context
 import rip.sunrise.injectapi.managers.HookManager

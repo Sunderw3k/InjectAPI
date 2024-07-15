@@ -5,6 +5,7 @@ package rip.sunrise.injectapi.callsite
  *
  * This class is loaded in the System CL and is accessed so that we can properly load HookManager.
  */
+@Suppress("unused")
 object DataTransport {
     @JvmStatic
     lateinit var classLoader: ClassLoader

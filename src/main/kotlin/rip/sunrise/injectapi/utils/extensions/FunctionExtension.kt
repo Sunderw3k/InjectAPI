@@ -1,6 +1,5 @@
 package rip.sunrise.injectapi.utils.extensions
 
-import org.objectweb.asm.Type
 import rip.sunrise.injectapi.injection.Context
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles

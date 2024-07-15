@@ -17,6 +17,7 @@ class Context {
      * Because this class is used as a bridge between hooks and hooked code, it is necessary to serialize the object into something both classloaders can understand.
      * To not lose ALL type information, a Map<String, Any> isn't the worst idea.
      */
+    @Suppress("unused")
     fun serialize(): Map<String, Any> {
         return mapOf("returnValue" to returnValue)
     }
@@ -28,6 +29,7 @@ class Context {
          * Note: The Companion class has to be loaded in all classloaders too, because the static version in Context invokes this virtual one.
          */
         @JvmStatic
+        @Suppress("unused")
         fun deserialize(data: Map<String, Any>): Context {
             return Context().also {
                 it.returnValue = data["returnValue"] as Optional<Any>
