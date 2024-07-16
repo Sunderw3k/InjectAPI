@@ -1,4 +1,4 @@
-                 
+
 # InjectAPI
 
 Ever needed to change some code at runtime? Does AspectJ or Mixin not 
@@ -71,10 +71,10 @@ As for using the library, you need [ASM](https://gitlab.ow2.org/asm/asm) or bund
 ```gradle
 // build.gradle.kts
 dependencies {
-	val asmVersion = "..."
-	implementation("org.ow2.asm:asm:$asmVersion")
-	implementation("org.ow2.asm:asm-commons:$asmVersion")
-	implementation("org.ow2.asm:asm-tree:$asmVersion")
+    val asmVersion = "..."
+    implementation("org.ow2.asm:asm:$asmVersion")
+    implementation("org.ow2.asm:asm-commons:$asmVersion")
+    implementation("org.ow2.asm:asm-tree:$asmVersion")
 }
 ```
 
