@@ -42,7 +42,7 @@ fun agentmain(args: String?, instrumentation: Instrumentation) {
         App::class.java, 
         // You need quite a bit of JVM knowledge for a few things here
         // You can get the descriptor in intelliJ with View -> Inspect Bytecode on the library class
-        TargetMethod("runTick", "()V"),
+        TargetMethod("runTick", "(I)V"),
         // The arguments you want to capture. runTick isn't static, so argument 0 is `this`
         // Argument 1 of type Int is our `tickNumber`
         listOf(
