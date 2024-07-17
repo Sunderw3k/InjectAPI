@@ -1,6 +1,8 @@
-package rip.sunrise.injectapi.injection
+package rip.sunrise.injectapi.hooks.inject
 
 import org.objectweb.asm.tree.LocalVariableNode
+import rip.sunrise.injectapi.hooks.CapturedArgument
+import rip.sunrise.injectapi.hooks.TargetMethod
 import rip.sunrise.injectapi.utils.extensions.toMethodHandle
 import java.lang.invoke.MethodHandle
 

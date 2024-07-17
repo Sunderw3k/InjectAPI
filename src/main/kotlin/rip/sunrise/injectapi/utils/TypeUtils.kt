@@ -7,7 +7,7 @@ import org.objectweb.asm.tree.InsnNode
 import org.objectweb.asm.tree.LocalVariableNode
 import org.objectweb.asm.tree.MethodInsnNode
 import org.objectweb.asm.tree.TypeInsnNode
-import rip.sunrise.injectapi.injection.CapturedArgument
+import rip.sunrise.injectapi.hooks.CapturedArgument
 
 /**
  * Returns a [InsnList] containing the required opcodes to return a [type] while unwrapping from [Object]

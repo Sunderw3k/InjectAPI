@@ -2,7 +2,7 @@ package rip.sunrise.injectapi
 
 import org.objectweb.asm.Type
 import rip.sunrise.injectapi.callsite.ProxyDynamicFactory
-import rip.sunrise.injectapi.injection.Context
+import rip.sunrise.injectapi.hooks.inject.Context
 import rip.sunrise.injectapi.managers.HookManager
 import java.lang.instrument.Instrumentation
 import java.nio.file.Files

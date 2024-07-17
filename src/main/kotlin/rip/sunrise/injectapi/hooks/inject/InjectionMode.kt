@@ -1,4 +1,4 @@
-package rip.sunrise.injectapi.injection
+package rip.sunrise.injectapi.hooks.inject
 
 /**
  * Specifies the point of injection

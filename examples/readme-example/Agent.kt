@@ -1,8 +1,12 @@
 import rip.sunrise.injectapi.InjectApi
 import rip.sunrise.injectapi.transformers.GlobalTransformer
 import rip.sunrise.injectapi.managers.HookManager
-import rip.sunrise.injectapi.injection.modes.HeadInjection
-import rip.sunrise.injectapi.injection.*
+
+import rip.sunrise.injectapi.hooks.inject.modes.HeadInjection
+import rip.sunrise.injectapi.hooks.inject.InjectHook
+import rip.sunrise.injectapi.hooks.inject.Context
+import rip.sunrise.injectapi.hooks.TargetMethod
+import rip.sunrise.injectapi.hooks.CapturedArgument
 
 import java.lang.instrument.Instrumentation
 import org.objectweb.asm.Opcodes

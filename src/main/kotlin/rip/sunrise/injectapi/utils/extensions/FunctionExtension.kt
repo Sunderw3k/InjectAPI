@@ -1,6 +1,6 @@
 package rip.sunrise.injectapi.utils.extensions
 
-import rip.sunrise.injectapi.injection.Context
+import rip.sunrise.injectapi.hooks.inject.Context
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
@@ -17,7 +17,9 @@ fun Function<*>.toMethodHandle(): MethodHandle {
     }
 
     val serializeHandle = MethodHandles.lookup().findVirtual(Context::class.java, "serialize", MethodType.methodType(Map::class.java))
-    val deserializeHandle = MethodHandles.lookup().findStatic(Context::class.java, "deserialize", MethodType.methodType(Context::class.java, Map::class.java))
+    val deserializeHandle = MethodHandles.lookup().findStatic(
+        Context::class.java, "deserialize", MethodType.methodType(
+            Context::class.java, Map::class.java))
     val invokeHandle = MethodHandles.lookup().unreflect(invoke).bindTo(this).let {
         // Set return type to Void and first parameter to Context
         it.asType(MethodType.methodType(Void.TYPE, Context::class.java, *it.type().parameterList().drop(1).toTypedArray()))

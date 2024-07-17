@@ -1,6 +1,6 @@
-package rip.sunrise.injectapi.injection.modes
+package rip.sunrise.injectapi.hooks.inject.modes
 
-import rip.sunrise.injectapi.injection.InjectionMode
+import rip.sunrise.injectapi.hooks.inject.InjectionMode
 
 /**
  * Injects at the entry point of the method
