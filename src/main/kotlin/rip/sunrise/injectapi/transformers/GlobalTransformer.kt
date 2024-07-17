@@ -36,6 +36,7 @@ class GlobalTransformer(private val dumper: ClassDumper? = null) : ClassFileTran
 
         // Run transformers
         InjectTransformer().transform(node)
+        RedirectTransformer().transform(node)
 
         val bytes = ClassWriter(ClassWriter.COMPUTE_FRAMES).let {
             node.accept(it)

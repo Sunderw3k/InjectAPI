@@ -23,15 +23,19 @@ object ProxyDynamicFactory {
                 .invoke(null) as ClassLoader
 
             val clazz = cl.loadClass("rip.sunrise.injectapi.managers.HookManager")
+            val hookClass = cl.loadClass("rip.sunrise.injectapi.hooks.Hook")
 
             // Note: DO NOT CAST. This is most likely not the correct classloader. current != cl
             val instance = clazz.getDeclaredField("INSTANCE").get(null)
 
             val hook = clazz.getDeclaredMethod("getHook", Int::class.java).invoke(instance, hookId)
-            val handle = (hook::class.java.getDeclaredMethod("getHandle").invoke(hook) as MethodHandle).let {
+            val handle = (hookClass.getDeclaredMethod("getHandle").invoke(hook) as MethodHandle).let {
                 return@let when (name) {
                     "INJECT" -> {
                         transformInjectHandle(it)
+                    }
+                    "REDIRECT_FIELD" -> {
+                        it
                     }
                     else -> error("Unknown hook name `$name`")
                 }

@@ -2,6 +2,7 @@ package rip.sunrise.injectapi.hooks.inject
 
 import org.objectweb.asm.tree.LocalVariableNode
 import rip.sunrise.injectapi.hooks.CapturedArgument
+import rip.sunrise.injectapi.hooks.Hook
 import rip.sunrise.injectapi.hooks.TargetMethod
 import rip.sunrise.injectapi.utils.extensions.toMethodHandle
 import java.lang.invoke.MethodHandle
@@ -11,13 +12,13 @@ import java.lang.invoke.MethodHandle
  *
  * [handle] has to match the descriptor of passed arguments alongside always taking [Context] as the first argument.
  */
-data class InjectHook(
+class InjectHook(
     val injectionMode: InjectionMode,
-    val clazz: Class<*>,
-    val method: TargetMethod,
+    clazz: Class<*>,
+    method: TargetMethod,
     val arguments: List<CapturedArgument>,
-    val handle: MethodHandle
-) {
+    handle: MethodHandle
+) : Hook(clazz, method, handle) {
     constructor(
         injectionMode: InjectionMode,
         clazz: Class<*>,
@@ -30,6 +31,8 @@ data class InjectHook(
      * Validates whether [arguments] are valid given the known local [variables].
      */
     fun validateArguments(variables: List<LocalVariableNode>): Boolean {
+        // TODO: Breaks when LocalVariableTable is not there.
+
         // TODO: Using reflection loses the types. Check out FunctionExtension
         // The best I can do right now is check bounds and opcodes. But opcodes are annoying.
 

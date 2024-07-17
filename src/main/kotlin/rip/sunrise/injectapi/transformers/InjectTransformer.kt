@@ -22,6 +22,7 @@ class InjectTransformer {
             method as MethodNode
 
             val methodHooks = HookManager.getHookMap().values
+                .filterIsInstance<InjectHook>()
                 .filter { it.method.name == method.name && it.method.desc == method.desc }
                 .sortedBy { it.injectionMode.typePriority }
             if (methodHooks.isEmpty()) return@forEach
