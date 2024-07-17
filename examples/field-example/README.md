@@ -4,6 +4,20 @@ This example is a showcase of field access redirection.
 
 The [App](App.java) is written in java due to how kotlin handles fields.
 
+### Explanation
+
+You can hook on gets and sets, if you need to modify a value
+of a field before its accessed by some method, you can use a get hook,
+which looks like this:
+```kotlin
+doStuff(hook(this.field, /* extra local parameters */))
+```
+
+A set hook looks like this:
+```kotlin
+this.field = hook(doOtherStuff(3), /* extra locals */)
+```
+
 ### Running
 
 The code to run this example is bundled in [setup.sh](setup.sh).
