@@ -128,7 +128,7 @@ class InjectTransformer {
             )
             val capturedDescriptor = getCapturedDescriptor(method.localVariables as List<LocalVariableNode>, hook.arguments)
             add(InvokeDynamicInsnNode(
-                "UNUSED",
+                "INJECT",
                 "(Ljava/util/Map;$capturedDescriptor)Ljava/util/Map;",
                 hookHandle,
                 HookManager.getHookId(hook)

@@ -16,31 +16,7 @@ fun Function<*>.toMethodHandle(): MethodHandle {
         it.isAccessible = true
     }
 
-    val serializeHandle = MethodHandles.lookup().findVirtual(Context::class.java, "serialize", MethodType.methodType(Map::class.java))
-    val deserializeHandle = MethodHandles.lookup().findStatic(
-        Context::class.java, "deserialize", MethodType.methodType(
-            Context::class.java, Map::class.java))
-    val invokeHandle = MethodHandles.lookup().unreflect(invoke).bindTo(this).let {
-        // Set return type to Void and first parameter to Context
-        it.asType(MethodType.methodType(Void.TYPE, Context::class.java, *it.type().parameterList().drop(1).toTypedArray()))
-    }
+    val invokeHandle = MethodHandles.lookup().unreflect(invoke).bindTo(this)
 
-    /*
-    Takes in (Map, arg1, arg2) and returns Map
-    Transformed from (Context, arg1, arg2) -> Void
-
-    Equivalent of:
-    val ctx = deserializeHandle(map)
-    invokeHandle(ctx, arg1, arg2)
-    return serializeHandle(ctx)
-     */
-    return MethodHandles.filterArguments(
-        MethodHandles.foldArguments(
-            MethodHandles.dropArguments(
-                serializeHandle,
-                1,
-                invokeHandle.type().parameterList().drop(1)
-            ), invokeHandle
-        ), 0, deserializeHandle
-    )
+    return invokeHandle
 }
