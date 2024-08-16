@@ -1,8 +1,8 @@
 package rip.sunrise.injectapi
 
 import org.objectweb.asm.Type
-import rip.sunrise.injectapi.callsite.ProxyDynamicFactory
-import rip.sunrise.injectapi.hooks.inject.Context
+import rip.sunrise.injectapi.global.Context
+import rip.sunrise.injectapi.global.ProxyDynamicFactory
 import rip.sunrise.injectapi.managers.HookManager
 import java.lang.instrument.Instrumentation
 
@@ -14,9 +14,11 @@ private external fun nativeDefineClass(loader: ClassLoader, classBytes: ByteArra
  * IMPORTANT: Functioning of the hooks depends on where this class is loaded. Make sure this is the same ClassLoader that loads HookManager.
  */
 object InjectApi {
-    const val CONTEXT_CLASS = "rip/sunrise/injectapi/hooks/inject/Context"
-    const val BOOTSTRAP_CLASS = "rip/sunrise/injectapi/callsite/ProxyDynamicFactory"
-    const val DATA_TRANSPORT_CLASS = "rip/sunrise/injectapi/callsite/DataTransport"
+    // TODO: This should be some kind of AP for compile-time inlining.
+    // I know const is inlining it, but I'm not sure if it works on java. Its better for me to write it myself.
+    const val CONTEXT_CLASS = "rip/sunrise/injectapi/global/Context"
+    const val BOOTSTRAP_CLASS = "rip/sunrise/injectapi/global/ProxyDynamicFactory"
+    const val DATA_TRANSPORT_CLASS = "rip/sunrise/injectapi/global/DataTransport"
 
     init {
         // TODO: Windows/Mac support.
@@ -48,7 +50,6 @@ object InjectApi {
             nativeDefineClass(it, getClassBytes(Type.getInternalName(ProxyDynamicFactory::class.java)))
 
             nativeDefineClass(it, getClassBytes(Type.getInternalName(Context::class.java)))
-            nativeDefineClass(it, getClassBytes(Type.getInternalName(Context.Companion::class.java)))
         }
 
         // Retransform
@@ -63,8 +64,8 @@ object InjectApi {
         // Set up the injection CL.
         ClassLoader.getSystemClassLoader()
             .loadClass(DATA_TRANSPORT_CLASS.replace("/", "."))
-            .getDeclaredMethod("setClassLoader", ClassLoader::class.java)
-            .invoke(null, InjectApi::class.java.classLoader)
+            .getDeclaredField("classLoader")
+            .set(null, InjectApi::class.java.classLoader)
     }
 
     private fun getClassBytes(name: String): ByteArray {

@@ -97,17 +97,17 @@ class InjectTransformer {
      *
      * @see InjectHook.arguments
      * @see HookManager.getHookId
-     * @see rip.sunrise.injectapi.callsite.ProxyDynamicFactory.bootstrap
+     * @see rip.sunrise.injectapi.global.ProxyDynamicFactory.bootstrap
      */
     private fun generateHookCode(hook: InjectHook, method: MethodNode): InsnList {
         return InsnList().apply {
             // Initialize Context
             add(TypeInsnNode(Opcodes.NEW, InjectApi.CONTEXT_CLASS))
             add(InsnNode(Opcodes.DUP))
-            add(MethodInsnNode(Opcodes.INVOKESPECIAL, InjectApi.CONTEXT_CLASS, "<init>", "()V"))
+            add(MethodInsnNode(Opcodes.INVOKESPECIAL, InjectApi.CONTEXT_CLASS, "<init>", "()V", false))
 
             // Serialize
-            add(MethodInsnNode(Opcodes.INVOKEVIRTUAL, InjectApi.CONTEXT_CLASS, "serialize", "()Ljava/util/Map;"))
+            add(MethodInsnNode(Opcodes.INVOKEVIRTUAL, InjectApi.CONTEXT_CLASS, "serialize", "()Ljava/util/Map;", false))
 
             // Load args
             hook.arguments.forEach {
@@ -137,10 +137,10 @@ class InjectTransformer {
             ))
 
             // Deserialize
-            add(MethodInsnNode(Opcodes.INVOKESTATIC, InjectApi.CONTEXT_CLASS, "deserialize", "(Ljava/util/Map;)L${InjectApi.CONTEXT_CLASS};"))
+            add(MethodInsnNode(Opcodes.INVOKESTATIC, InjectApi.CONTEXT_CLASS, "deserialize", "(Ljava/util/Map;)L${InjectApi.CONTEXT_CLASS};", false))
 
             // Get optional
-            add(MethodInsnNode(Opcodes.INVOKEVIRTUAL, InjectApi.CONTEXT_CLASS, "getReturnValue", "()Ljava/util/Optional;"))
+            add(FieldInsnNode(Opcodes.GETFIELD, InjectApi.CONTEXT_CLASS, "returnValue", "Ljava/util/Optional;"))
             add(InsnNode(Opcodes.DUP))
 
             // Get optional value and check if its present
