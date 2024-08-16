@@ -1,11 +1,14 @@
 package rip.sunrise.injectapi.hooks.inject
 
 import org.objectweb.asm.tree.LocalVariableNode
+import rip.sunrise.injectapi.global.Context
 import rip.sunrise.injectapi.hooks.CapturedArgument
 import rip.sunrise.injectapi.hooks.Hook
 import rip.sunrise.injectapi.hooks.TargetMethod
 import rip.sunrise.injectapi.utils.extensions.toMethodHandle
 import java.lang.invoke.MethodHandle
+import java.lang.invoke.MethodHandles
+import java.lang.invoke.MethodType
 
 /**
  * A hook made for injecting extra calls into methods.
@@ -25,7 +28,7 @@ class InjectHook(
         method: TargetMethod,
         arguments: List<CapturedArgument>,
         hook: Function<Unit>
-    ) : this(injectionMode, clazz, method, arguments, hook.toMethodHandle())
+    ) : this(injectionMode, clazz, method, arguments, hook.toInjectMethodHandle())
 
     /**
      * Validates whether [arguments] are valid given the known local [variables].
@@ -39,4 +42,50 @@ class InjectHook(
         val variableIndices = variables.map { it.index }
         return arguments.all { it.index in variableIndices }
     }
+}
+
+/**
+ * Transforms a [MethodHandle] for InjectHooks.
+ *
+ * The [MethodHandle] is expected to take [Context] as the first argument and return [Void].
+ * The original descriptor is `(Context, ...)V` and is transformed into `(Map, ...)Map`
+ *
+ * Equivalent of:
+ * ```
+ * val ctx = Context.deserialize(map)
+ * hook(ctx, arg1, arg2, ...)
+ * return ctx.serialize()
+ * ```
+ */
+fun Function<*>.toInjectMethodHandle(): MethodHandle {
+    val serializeHandle = MethodHandles.lookup().findVirtual(
+        Context::class.java,
+        "serialize",
+        MethodType.methodType(Map::class.java)
+    )
+
+    val deserializeHandle = MethodHandles.lookup().findStatic(
+        Context::class.java,
+        "deserialize",
+        MethodType.methodType(Context::class.java, Map::class.java)
+    )
+
+    val invokeHandle = toMethodHandle().let {
+        // Set return type to Void and first parameter to Context
+        it.asType(MethodType.methodType(
+            Void.TYPE,
+            Context::class.java,
+            *it.type().parameterList().drop(1).toTypedArray()
+        ))
+    }
+
+    return MethodHandles.filterArguments(
+        MethodHandles.foldArguments(
+            MethodHandles.dropArguments(
+                serializeHandle,
+                1,
+                invokeHandle.type().parameterList().drop(1)
+            ), invokeHandle
+        ), 0, deserializeHandle
+    )
 }

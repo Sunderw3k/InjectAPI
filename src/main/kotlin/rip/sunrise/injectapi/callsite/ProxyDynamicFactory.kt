@@ -29,17 +29,7 @@ object ProxyDynamicFactory {
             val instance = clazz.getDeclaredField("INSTANCE").get(null)
 
             val hook = clazz.getDeclaredMethod("getHook", Int::class.java).invoke(instance, hookId)
-            val handle = (hookClass.getDeclaredMethod("getHandle").invoke(hook) as MethodHandle).let {
-                return@let when (name) {
-                    "INJECT" -> {
-                        transformInjectHandle(it)
-                    }
-                    "REDIRECT_FIELD" -> {
-                        it
-                    }
-                    else -> error("Unknown hook name `$name`")
-                }
-            }
+            val handle = hookClass.getDeclaredMethod("getHandle").invoke(hook) as MethodHandle
 
             // TODO: Kinda forced, it won't fail. Only happens because types are lost when calling unreflect.
             return ConstantCallSite(handle.asType(type))
@@ -47,51 +37,5 @@ object ProxyDynamicFactory {
             e.printStackTrace()
             error(e)
         }
-    }
-
-    /**
-     * Transforms a [MethodHandle] for InjectHooks.
-     *
-     * The [MethodHandle] is expected to take [Context] as the first argument and return [Void].
-     * The original descriptor is `(Context, ...)V` and is transformed into `(Map, ...)Map`
-     *
-     * Equivalent of:
-     * ```
-     * val ctx = Context.deserialize(map)
-     * hook(ctx, arg1, arg2, ...)
-     * return ctx.serialize()
-     * ```
-     */
-    private fun transformInjectHandle(handle: MethodHandle): MethodHandle {
-        val serializeHandle = MethodHandles.lookup().findVirtual(
-            Context::class.java,
-            "serialize",
-            MethodType.methodType(Map::class.java)
-        )
-
-        val deserializeHandle = MethodHandles.lookup().findStatic(
-            Context::class.java,
-            "deserialize",
-            MethodType.methodType(Context::class.java, Map::class.java)
-        )
-
-        val invokeHandle = handle.let {
-            // Set return type to Void and first parameter to Context
-            it.asType(MethodType.methodType(
-                Void.TYPE,
-                Context::class.java,
-                *it.type().parameterList().drop(1).toTypedArray()
-            ))
-        }
-
-        return MethodHandles.filterArguments(
-            MethodHandles.foldArguments(
-                MethodHandles.dropArguments(
-                    serializeHandle,
-                    1,
-                    invokeHandle.type().parameterList().drop(1)
-                ), invokeHandle
-            ), 0, deserializeHandle
-        )
     }
 }
