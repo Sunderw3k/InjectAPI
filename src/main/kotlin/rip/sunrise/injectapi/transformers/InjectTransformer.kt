@@ -5,6 +5,7 @@ import org.objectweb.asm.Label
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.*
+import rip.sunrise.injectapi.InjectApi
 import rip.sunrise.injectapi.hooks.inject.InjectHook
 import rip.sunrise.injectapi.hooks.inject.modes.HeadInjection
 import rip.sunrise.injectapi.hooks.inject.modes.InvokeInjection
@@ -101,12 +102,12 @@ class InjectTransformer {
     private fun generateHookCode(hook: InjectHook, method: MethodNode): InsnList {
         return InsnList().apply {
             // Initialize Context
-            add(TypeInsnNode(Opcodes.NEW, "rip/sunrise/injectapi/hooks/inject/Context"))
+            add(TypeInsnNode(Opcodes.NEW, InjectApi.CONTEXT_CLASS))
             add(InsnNode(Opcodes.DUP))
-            add(MethodInsnNode(Opcodes.INVOKESPECIAL, "rip/sunrise/injectapi/hooks/inject/Context", "<init>", "()V"))
+            add(MethodInsnNode(Opcodes.INVOKESPECIAL, InjectApi.CONTEXT_CLASS, "<init>", "()V"))
 
             // Serialize
-            add(MethodInsnNode(Opcodes.INVOKEVIRTUAL, "rip/sunrise/injectapi/hooks/inject/Context", "serialize", "()Ljava/util/Map;"))
+            add(MethodInsnNode(Opcodes.INVOKEVIRTUAL, InjectApi.CONTEXT_CLASS, "serialize", "()Ljava/util/Map;"))
 
             // Load args
             hook.arguments.forEach {
@@ -116,7 +117,7 @@ class InjectTransformer {
             // Hook InvokeDynamic
             val hookHandle = Handle(
                 Opcodes.H_INVOKESTATIC,
-                "rip/sunrise/injectapi/callsite/ProxyDynamicFactory",
+                InjectApi.BOOTSTRAP_CLASS,
                 "bootstrap",
                 MethodType.methodType(
                     CallSite::class.java,
@@ -136,10 +137,10 @@ class InjectTransformer {
             ))
 
             // Deserialize
-            add(MethodInsnNode(Opcodes.INVOKESTATIC, "rip/sunrise/injectapi/hooks/inject/Context", "deserialize", "(Ljava/util/Map;)Lrip/sunrise/injectapi/hooks/inject/Context;"))
+            add(MethodInsnNode(Opcodes.INVOKESTATIC, InjectApi.CONTEXT_CLASS, "deserialize", "(Ljava/util/Map;)L${InjectApi.CONTEXT_CLASS};"))
 
             // Get optional
-            add(MethodInsnNode(Opcodes.INVOKEVIRTUAL, "rip/sunrise/injectapi/hooks/inject/Context", "getReturnValue", "()Ljava/util/Optional;"))
+            add(MethodInsnNode(Opcodes.INVOKEVIRTUAL, InjectApi.CONTEXT_CLASS, "getReturnValue", "()Ljava/util/Optional;"))
             add(InsnNode(Opcodes.DUP))
 
             // Get optional value and check if its present

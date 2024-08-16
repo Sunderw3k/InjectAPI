@@ -5,8 +5,6 @@ import rip.sunrise.injectapi.callsite.ProxyDynamicFactory
 import rip.sunrise.injectapi.hooks.inject.Context
 import rip.sunrise.injectapi.managers.HookManager
 import java.lang.instrument.Instrumentation
-import java.nio.file.Files
-import java.nio.file.StandardCopyOption
 
 private external fun nativeDefineClass(loader: ClassLoader, classBytes: ByteArray)
 
@@ -16,6 +14,10 @@ private external fun nativeDefineClass(loader: ClassLoader, classBytes: ByteArra
  * IMPORTANT: Functioning of the hooks depends on where this class is loaded. Make sure this is the same ClassLoader that loads HookManager.
  */
 object InjectApi {
+    const val CONTEXT_CLASS = "rip/sunrise/injectapi/hooks/inject/Context"
+    const val BOOTSTRAP_CLASS = "rip/sunrise/injectapi/callsite/ProxyDynamicFactory"
+    const val DATA_TRANSPORT_CLASS = "rip/sunrise/injectapi/callsite/DataTransport"
+
     init {
         // TODO: Windows/Mac support.
         val stream = InjectApi::class.java.getResourceAsStream("/ForceClassLoaderDefine.so") ?: error("Couldn't find native")
@@ -56,11 +58,11 @@ object InjectApi {
     private fun setupDataTransport() {
         // Load DataTransport into System CL
         // Note: Don't use ::class.java because it loads. This should be exclusively on the System CL
-        nativeDefineClass(ClassLoader.getSystemClassLoader(), getClassBytes("rip/sunrise/injectapi/callsite/DataTransport"))
+        nativeDefineClass(ClassLoader.getSystemClassLoader(), getClassBytes(DATA_TRANSPORT_CLASS))
 
         // Set up the injection CL.
         ClassLoader.getSystemClassLoader()
-            .loadClass("rip.sunrise.injectapi.callsite.DataTransport")
+            .loadClass(DATA_TRANSPORT_CLASS.replace("/", "."))
             .getDeclaredMethod("setClassLoader", ClassLoader::class.java)
             .invoke(null, InjectApi::class.java.classLoader)
     }
