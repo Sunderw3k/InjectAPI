@@ -4,6 +4,7 @@ import org.objectweb.asm.Type
 import rip.sunrise.injectapi.global.Context
 import rip.sunrise.injectapi.global.ProxyDynamicFactory
 import rip.sunrise.injectapi.managers.HookManager
+import rip.sunrise.injectapi.utils.Native
 import java.lang.instrument.Instrumentation
 
 private external fun nativeDefineClass(loader: ClassLoader, classBytes: ByteArray)
@@ -21,14 +22,7 @@ object InjectApi {
     const val DATA_TRANSPORT_CLASS = "rip/sunrise/injectapi/global/DataTransport"
 
     init {
-        // TODO: Windows/Mac support.
-        val stream = InjectApi::class.java.getResourceAsStream("/ForceClassLoaderDefine.so") ?: error("Couldn't find native")
-        Files.createTempFile("forcecldefine", null).also {
-            it.toFile().deleteOnExit()
-
-            Files.copy(stream, it, StandardCopyOption.REPLACE_EXISTING)
-            System.load(it.toFile().path)
-        }
+        Native.loadNatives()
     }
 
     private var initialized = false
