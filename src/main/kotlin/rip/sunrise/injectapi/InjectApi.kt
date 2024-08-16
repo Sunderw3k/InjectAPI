@@ -14,6 +14,7 @@ private external fun nativeDefineClass(loader: ClassLoader, classBytes: ByteArra
  *
  * IMPORTANT: Functioning of the hooks depends on where this class is loaded. Make sure this is the same ClassLoader that loads HookManager.
  */
+@Suppress("unused")
 object InjectApi {
     // TODO: This should be some kind of AP for compile-time inlining.
     // I know const is inlining it, but I'm not sure if it works on java. Its better for me to write it myself.
