@@ -4,9 +4,9 @@ import rip.sunrise.injectapi.managers.HookManager
 
 import rip.sunrise.injectapi.hooks.inject.modes.HeadInjection
 import rip.sunrise.injectapi.hooks.inject.InjectHook
-import rip.sunrise.injectapi.hooks.inject.Context
 import rip.sunrise.injectapi.hooks.TargetMethod
 import rip.sunrise.injectapi.hooks.CapturedArgument
+import rip.sunrise.injectapi.global.Context
 
 import java.lang.instrument.Instrumentation
 import org.objectweb.asm.Opcodes
