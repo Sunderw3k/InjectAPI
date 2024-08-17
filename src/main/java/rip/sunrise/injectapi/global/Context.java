@@ -14,7 +14,6 @@ public class Context {
     /**
      * Specifies the early return value returned right after the hook callback.
      */
-    // TODO: Change to null because its java? A null jump should be cheaper than this
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     public Optional<Object> returnValue = Optional.empty();
 
@@ -30,10 +29,10 @@ public class Context {
     /**
      * Only static to make it easier to invoke from MethodHandles and bytecode.
      */
-    @SuppressWarnings("unused")
+    @SuppressWarnings({"unused", "unchecked"})
     public static @NotNull Context deserialize(@NotNull Map<String, Object> data) {
         Context ctx = new Context();
-        ctx.returnValue = Optional.of(data.get("returnValue"));
+        ctx.returnValue = (Optional<Object>) data.get("returnValue");
 
         return ctx;
     }
