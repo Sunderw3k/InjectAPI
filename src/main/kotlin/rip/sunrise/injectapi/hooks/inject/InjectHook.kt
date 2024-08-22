@@ -21,14 +21,14 @@ class InjectHook(
     method: TargetMethod,
     val arguments: List<CapturedArgument>,
     handle: MethodHandle
-) : Hook(clazz, method, handle) {
+) : Hook(clazz, method, handle.transformInjectHandle()) {
     constructor(
         injectionMode: InjectionMode,
         clazz: Class<*>,
         method: TargetMethod,
         arguments: List<CapturedArgument>,
         hook: Function<Unit>
-    ) : this(injectionMode, clazz, method, arguments, hook.toInjectMethodHandle())
+    ) : this(injectionMode, clazz, method, arguments, hook.toMethodHandle())
 
     /**
      * Validates whether [arguments] are valid given the known local [variables].
@@ -57,7 +57,7 @@ class InjectHook(
  * return ctx.serialize()
  * ```
  */
-fun Function<*>.toInjectMethodHandle(): MethodHandle {
+fun MethodHandle.transformInjectHandle(): MethodHandle {
     val serializeHandle = MethodHandles.lookup().findVirtual(
         Context::class.java,
         "serialize",
@@ -70,14 +70,11 @@ fun Function<*>.toInjectMethodHandle(): MethodHandle {
         MethodType.methodType(Context::class.java, Map::class.java)
     )
 
-    val invokeHandle = toMethodHandle().let {
-        // Set return type to Void and first parameter to Context
-        it.asType(MethodType.methodType(
-            Void.TYPE,
-            Context::class.java,
-            *it.type().parameterList().drop(1).toTypedArray()
-        ))
-    }
+    val invokeHandle = this.asType(MethodType.methodType(
+        Void.TYPE,
+        Context::class.java,
+        *this.type().parameterList().drop(1).toTypedArray()
+    ))
 
     return MethodHandles.filterArguments(
         MethodHandles.foldArguments(
