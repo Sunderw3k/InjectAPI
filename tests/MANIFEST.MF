@@ -1,0 +1,4 @@
+Premain-Class: AgentKt
+Class-Path: InjectAPI-all.jar App.jar
+Can-Retransform-Classes: true
+Can-Redefine-Classes: true
