@@ -34,11 +34,9 @@ class InjectTransformer {
                     println("Hook '$hook' attempts to capture invalid arguments")
                 }
 
-                val hookCode = generateHookCode(hook, method)
-
                 when (hook.injectionMode) {
                     is HeadInjection -> {
-                        method.instructions.insert(hookCode)
+                        method.instructions.insert(generateHookCode(hook, method))
                     }
 
                     is ReturnInjection -> {
@@ -56,7 +54,7 @@ class InjectTransformer {
                                     Opcodes.DRETURN
                                 )
                             }.forEach {
-                                method.instructions.insertBefore(it, hookCode)
+                                method.instructions.insertBefore(it, generateHookCode(hook, method))
                             }
                     }
 
@@ -70,7 +68,7 @@ class InjectTransformer {
                                 val index = method.instructions.indexOf(it)
                                 val offset = method.instructions.get(index + hook.injectionMode.offset)
 
-                                method.instructions.insert(offset, hookCode)
+                                method.instructions.insert(offset, generateHookCode(hook, method))
                             }
                     }
                 }
