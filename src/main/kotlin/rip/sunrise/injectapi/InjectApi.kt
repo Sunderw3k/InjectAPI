@@ -26,41 +26,29 @@ object InjectApi {
         Native.loadNatives()
     }
 
-    private var initialized = false
-
     /**
      * Call this when you're ready to apply the hooks.
      *
      * IMPORTANT: Call from the same ClassLoader which loaded HookManager, or any CL that resolves both of classes to the same one.
      */
     fun transform(inst: Instrumentation) {
-        // Set up DataTransport
-        if (!initialized) {
-            setupDataTransport()
-            initialized = true
-        }
+        // TODO: This is pretty sketchy. nativeDefineClass kills the jvm. It should throw a java error instead.
+        HookManager.getTargetClasses().map { it.classLoader }.distinct().forEach {
+            // In case the classes are defined already, we don't want to load them again.
+            if (runCatching { it.loadClass(Context::class.java.name) }.isFailure) {
+                // Load Context and ProxyDynamicFactory in the hooked classloaders
+                nativeDefineClass(it, getClassBytes(Type.getInternalName(Context::class.java)))
+                nativeDefineClass(it, getClassBytes(Type.getInternalName(ProxyDynamicFactory::class.java)))
+            }
 
-        // Load ProxyDynamicFactory and Context in all CLs
-        HookManager.getTargetClasses().map { it.classLoader }.filter { it != InjectApi::class.java.classLoader }.distinct().forEach {
-            nativeDefineClass(it, getClassBytes(Type.getInternalName(ProxyDynamicFactory::class.java)))
-
-            nativeDefineClass(it, getClassBytes(Type.getInternalName(Context::class.java)))
+            // Set the classloader
+            it.loadClass(ProxyDynamicFactory::class.java.name)
+                .getDeclaredField("classLoader")
+                .set(null, InjectApi::class.java.classLoader)
         }
 
         // Retransform
         inst.retransformClasses(*HookManager.getTargetClasses().toTypedArray())
-    }
-
-    private fun setupDataTransport() {
-        // Load DataTransport into System CL
-        // Note: Don't use ::class.java because it loads. This should be exclusively on the System CL
-        nativeDefineClass(ClassLoader.getSystemClassLoader(), getClassBytes(DATA_TRANSPORT_CLASS))
-
-        // Set up the injection CL.
-        ClassLoader.getSystemClassLoader()
-            .loadClass(DATA_TRANSPORT_CLASS.replace("/", "."))
-            .getDeclaredField("classLoader")
-            .set(null, InjectApi::class.java.classLoader)
     }
 
     private fun getClassBytes(name: String): ByteArray {
