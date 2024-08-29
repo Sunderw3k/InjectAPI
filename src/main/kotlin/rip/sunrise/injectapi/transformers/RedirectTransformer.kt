@@ -3,7 +3,6 @@ package rip.sunrise.injectapi.transformers
 import org.objectweb.asm.Handle
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.*
-import rip.sunrise.injectapi.InjectApi
 import rip.sunrise.injectapi.hooks.redirect.field.FieldRedirectHook
 import rip.sunrise.injectapi.managers.HookManager
 import rip.sunrise.injectapi.utils.getCapturedDescriptor
@@ -51,7 +50,7 @@ class RedirectTransformer {
             // Hook InvokeDynamic
             val hookHandle = Handle(
                 Opcodes.H_INVOKESTATIC,
-                InjectApi.BOOTSTRAP_CLASS,
+                "@BOOTSTRAP@",
                 "bootstrap",
                 MethodType.methodType(
                     CallSite::class.java,

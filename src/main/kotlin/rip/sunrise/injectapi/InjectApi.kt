@@ -16,12 +16,6 @@ private external fun nativeDefineClass(loader: ClassLoader, classBytes: ByteArra
  */
 @Suppress("unused")
 object InjectApi {
-    // TODO: This should be some kind of AP for compile-time inlining.
-    // I know const is inlining it, but I'm not sure if it works on java. Its better for me to write it myself.
-    const val CONTEXT_CLASS = "rip/sunrise/injectapi/global/Context"
-    const val BOOTSTRAP_CLASS = "rip/sunrise/injectapi/global/ProxyDynamicFactory"
-    const val DATA_TRANSPORT_CLASS = "rip/sunrise/injectapi/global/DataTransport"
-
     init {
         Native.loadNatives()
     }

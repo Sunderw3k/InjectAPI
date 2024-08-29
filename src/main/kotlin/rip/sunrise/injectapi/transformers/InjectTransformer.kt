@@ -5,7 +5,6 @@ import org.objectweb.asm.Label
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.*
-import rip.sunrise.injectapi.InjectApi
 import rip.sunrise.injectapi.hooks.inject.InjectHook
 import rip.sunrise.injectapi.hooks.inject.modes.HeadInjection
 import rip.sunrise.injectapi.hooks.inject.modes.InvokeInjection
@@ -98,14 +97,16 @@ class InjectTransformer {
      * @see rip.sunrise.injectapi.global.ProxyDynamicFactory.bootstrap
      */
     private fun generateHookCode(hook: InjectHook, method: MethodNode): InsnList {
+        val contextClass = "@CONTEXT@"
+
         return InsnList().apply {
             // Initialize Context
-            add(TypeInsnNode(Opcodes.NEW, InjectApi.CONTEXT_CLASS))
+            add(TypeInsnNode(Opcodes.NEW, contextClass))
             add(InsnNode(Opcodes.DUP))
-            add(MethodInsnNode(Opcodes.INVOKESPECIAL, InjectApi.CONTEXT_CLASS, "<init>", "()V", false))
+            add(MethodInsnNode(Opcodes.INVOKESPECIAL, contextClass, "<init>", "()V", false))
 
             // Serialize
-            add(MethodInsnNode(Opcodes.INVOKEVIRTUAL, InjectApi.CONTEXT_CLASS, "serialize", "()Ljava/util/Map;", false))
+            add(MethodInsnNode(Opcodes.INVOKEVIRTUAL, contextClass, "serialize", "()Ljava/util/Map;", false))
 
             // Load args
             hook.arguments.forEach {
@@ -115,7 +116,7 @@ class InjectTransformer {
             // Hook InvokeDynamic
             val hookHandle = Handle(
                 Opcodes.H_INVOKESTATIC,
-                InjectApi.BOOTSTRAP_CLASS,
+                "@BOOTSTRAP@",
                 "bootstrap",
                 MethodType.methodType(
                     CallSite::class.java,
@@ -135,10 +136,10 @@ class InjectTransformer {
             ))
 
             // Deserialize
-            add(MethodInsnNode(Opcodes.INVOKESTATIC, InjectApi.CONTEXT_CLASS, "deserialize", "(Ljava/util/Map;)L${InjectApi.CONTEXT_CLASS};", false))
+            add(MethodInsnNode(Opcodes.INVOKESTATIC, contextClass, "deserialize", "(Ljava/util/Map;)L${contextClass};", false))
 
             // Get optional
-            add(FieldInsnNode(Opcodes.GETFIELD, InjectApi.CONTEXT_CLASS, "returnValue", "Ljava/util/Optional;"))
+            add(FieldInsnNode(Opcodes.GETFIELD, contextClass, "returnValue", "Ljava/util/Optional;"))
             add(InsnNode(Opcodes.DUP))
 
             // Get optional value and check if its present

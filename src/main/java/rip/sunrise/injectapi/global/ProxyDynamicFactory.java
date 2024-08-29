@@ -13,12 +13,13 @@ public class ProxyDynamicFactory {
      * Called from hooks. This is the bridge between any ClassLoader and the InjectAPI ClassLoader.
      * Because this is only called once. It's okay to use reflection here.
      */
+    @SuppressWarnings("ReplaceOnLiteralHasNoEffect")
     public static CallSite bootstrap(MethodHandles.Lookup caller, String name, MethodType type, int hookId) {
         System.out.println("Got invokedynamic call from" + caller + " for hookId " + hookId);
 
         try {
-            Class<?> managerClass = classLoader.loadClass("rip.sunrise.injectapi.managers.HookManager");
-            Class<?> hookClass = classLoader.loadClass("rip.sunrise.injectapi.hooks.Hook");
+            Class<?> managerClass = classLoader.loadClass("@HOOK_MANAGER".replace("/", "."));
+            Class<?> hookClass = classLoader.loadClass("@HOOK@".replace("/", "."));
 
             Object instance = managerClass.getDeclaredField("INSTANCE").get(null);
 
