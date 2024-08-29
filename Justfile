@@ -26,12 +26,10 @@ test test_name:
 	java -javaagent:Agent.jar App
 	return_code=$?
 
-	echo "Running test {{test_name}}"
-
 	if [ "$return_code" -eq 0 ]; then
-	  echo "SUCCESS!"
+	  echo "[{{test_name}}] SUCCESS!"
 	else
-	  echo "FAILED! Code: $return_code"
+	  echo "[{{test_name}}] FAILED! Code: $return_code"
 	fi
 
 test_all:
