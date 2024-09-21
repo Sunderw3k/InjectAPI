@@ -18,7 +18,7 @@ public class ProxyDynamicFactory {
         System.out.println("Got invokedynamic call from" + caller + " for hookId " + hookId);
 
         try {
-            Class<?> managerClass = classLoader.loadClass("@HOOK_MANAGER".replace("/", "."));
+            Class<?> managerClass = classLoader.loadClass("@HOOK_MANAGER@".replace("/", "."));
             Class<?> hookClass = classLoader.loadClass("@HOOK@".replace("/", "."));
 
             Object instance = managerClass.getDeclaredField("INSTANCE").get(null);
