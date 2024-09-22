@@ -12,7 +12,6 @@ import java.lang.instrument.Instrumentation
 import org.objectweb.asm.Opcodes
 import App
 
-@JvmStatic
 fun premain(args: String?, instrumentation: Instrumentation) {
      HookManager.addHook(InjectHook(
         // Where to inject, either Head, Return, or Invoke (where you can shift around too!)

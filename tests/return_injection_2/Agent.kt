@@ -14,7 +14,6 @@ import org.objectweb.asm.Opcodes
 import java.lang.instrument.Instrumentation
 import App
 
-@JvmStatic
 fun premain(args: String?, instrumentation: Instrumentation) {
     HookManager.addHook(InjectHook(
         ReturnInjection(),

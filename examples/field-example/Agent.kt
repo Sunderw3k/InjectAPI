@@ -15,7 +15,6 @@ import java.lang.instrument.Instrumentation
 import org.objectweb.asm.Opcodes
 import App
 
-@JvmStatic
 fun premain(args: String?, instrumentation: Instrumentation) {
     HookManager.addHook(FieldRedirectHook(
         // The Types of opcodes to inject on, either GET, SET, or both

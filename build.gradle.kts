@@ -61,7 +61,7 @@ tasks {
 
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_21)
-            languageVersion.set(KotlinVersion.KOTLIN_2_1)
+            languageVersion.set(KotlinVersion.KOTLIN_2_0)
         }
     }
     build.get().finalizedBy(shadowJar)
