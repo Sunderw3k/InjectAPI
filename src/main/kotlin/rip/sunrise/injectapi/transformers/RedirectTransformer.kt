@@ -2,6 +2,7 @@ package rip.sunrise.injectapi.transformers
 
 import org.objectweb.asm.Handle
 import org.objectweb.asm.Opcodes
+import org.objectweb.asm.Type
 import org.objectweb.asm.tree.*
 import rip.sunrise.injectapi.hooks.redirect.field.FieldRedirectHook
 import rip.sunrise.injectapi.managers.HookManager
@@ -15,6 +16,7 @@ class RedirectTransformer {
         node.methods.forEach { method ->
             val methodHooks = HookManager.getHookMap().values
                 .filterIsInstance<FieldRedirectHook>()
+                .filter { Type.getType(it.clazz).internalName == node.name }
                 .filter { it.method.name == method.name && it.method.desc == method.desc }
             if (methodHooks.isEmpty()) return@forEach
 
