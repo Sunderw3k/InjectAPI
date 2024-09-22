@@ -1,4 +1,4 @@
-LIBRARY_VERSION := "0.3.0"
+LIBRARY_VERSION := "0.4.0"
 LIBRARY_PATH :=  justfile_directory() + "/build/libs/InjectAPI-" + LIBRARY_VERSION + "-all.jar"
 MANIFEST_PATH :=  justfile_directory() + "/tests/MANIFEST.MF"
 
@@ -15,7 +15,7 @@ build test_name:
 	javac -d . ../App.java
 	jar -cf App.jar App.class
 
-	kotlinc -include-runtime -cp "App.jar:InjectAPI-all.jar" -d Agent.jar ../Agent.kt
+	kotlinc -jvm-target 21 -include-runtime -cp "InjectAPI-all.jar:App.jar" -d Agent.jar ../Agent.kt
 	jar ufm Agent.jar "{{MANIFEST_PATH}}"
 
 test test_name: 
@@ -23,7 +23,7 @@ test test_name:
 	cd tests/{{test_name}}/run || exit
 	cp "{{LIBRARY_PATH}}" InjectAPI-all.jar
 
-	java -javaagent:Agent.jar App
+	java -cp InjectAPI-all.jar:App.jar -javaagent:Agent.jar App
 	return_code=$?
 
 	if [ "$return_code" -eq 0 ]; then
