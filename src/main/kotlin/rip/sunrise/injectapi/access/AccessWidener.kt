@@ -4,8 +4,11 @@ import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.*
+import rip.sunrise.injectapi.access.AccessWidener.FunctionWrapper
+import rip.sunrise.injectapi.utils.extensions.addOpensAll
 import java.lang.instrument.ClassFileTransformer
 import java.lang.instrument.Instrumentation
+import java.lang.invoke.MethodHandles
 import java.security.ProtectionDomain
 
 /**
@@ -13,7 +16,7 @@ import java.security.ProtectionDomain
  *
  * NOTE: Unstable
  */
-internal object AccessWidener {
+object AccessWidener {
     /**
      * Used for modifying addOpens to allow for calling private methods.
      */
@@ -22,6 +25,21 @@ internal object AccessWidener {
         inst.addTransformer(transformer, true)
         inst.retransformClasses(Module::class.java)
         inst.removeTransformer(transformer)
+    }
+
+    inline fun <reified T, R> accessMethod(name: String, vararg types: Class<*>): FunctionWrapper<R> {
+        T::class.java.module.addOpensAll(AccessWidener::class.java.module)
+
+        return FunctionWrapper { args ->
+            val method = T::class.java.getDeclaredMethod(name, *types).also { it.isAccessible = true }
+            val handle = MethodHandles.lookup().unreflect(method)
+
+            handle.invokeWithArguments(args.toList()) as R
+        }
+    }
+
+    fun interface FunctionWrapper<R> {
+        operator fun invoke(vararg args: Any?): R
     }
 
     private class Transformer : ClassFileTransformer {
