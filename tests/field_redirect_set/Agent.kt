@@ -1,8 +1,6 @@
 import rip.sunrise.injectapi.*
 import rip.sunrise.injectapi.hooks.*
-import rip.sunrise.injectapi.hooks.inject.*
-import rip.sunrise.injectapi.hooks.inject.modes.*
-import rip.sunrise.injectapi.global.*
+import rip.sunrise.injectapi.hooks.redirect.field.*
 
 import rip.sunrise.injectapi.transformers.GlobalTransformer
 import rip.sunrise.injectapi.managers.HookManager
@@ -13,13 +11,14 @@ import java.lang.instrument.Instrumentation
 import App
 
 fun premain(args: String?, instrumentation: Instrumentation) {
-    HookManager.addHook(InjectHook(
-        ReturnInjection(),
+    HookManager.addHook(FieldRedirectHook(
+        FieldRedirectHook.Type.SET,
         App::class.java,
-        TargetMethod("main", "(I)I"),
-        emptyList(),
-    ) { _: Context ->
-        System.exit(0)
+        TargetMethod("main", "([Ljava/lang/String;)V"),
+        TargetField("returnCode", "App", "I"),
+        emptyList()
+    ) { value: Int ->
+        return@FieldRedirectHook 0
     })
 
     GlobalTransformer().register(instrumentation)
