@@ -5,9 +5,9 @@ import rip.sunrise.injectapi.access.AccessWidener
 import rip.sunrise.injectapi.global.Context
 import rip.sunrise.injectapi.global.ProxyDynamicFactory
 import rip.sunrise.injectapi.managers.HookManager
+import rip.sunrise.injectapi.utils.defineClass
+import rip.sunrise.injectapi.utils.setAccessibleUnsafe
 import java.lang.instrument.Instrumentation
-import java.lang.invoke.MethodHandle
-import java.lang.invoke.MethodHandles
 
 /**
  * The main class containing all the initialization logic.
@@ -29,34 +29,23 @@ object InjectApi {
             // In case the classes are defined already, we don't want to load them again.
             if (runCatching { it.loadClass(Context::class.java.name) }.isFailure) {
                 // Load Context and ProxyDynamicFactory in the hooked classloaders
-                defineClass(it, getClassBytes(Type.getInternalName(Context::class.java)))
-                defineClass(it, getClassBytes(Type.getInternalName(ProxyDynamicFactory::class.java)))
+                defineClass(getClassBytes(Type.getInternalName(Context::class.java)), it, null)
+                defineClass(getClassBytes(Type.getInternalName(ProxyDynamicFactory::class.java)), it, null)
             }
 
-            it.loadClass(ProxyDynamicFactory::class.java.name)
-                .getDeclaredField("classLoader")
-                .set(null, InjectApi::class.java.classLoader)
+            if (it == null) {
+                findBootstrapClassOrNull.invoke(null, ProxyDynamicFactory::class.java.name) as Class<*>
+            } else {
+                it.loadClass(ProxyDynamicFactory::class.java.name)
+            }.getDeclaredField("classLoader").set(null, InjectApi::class.java.classLoader)
         }
 
         // Retransform
         inst.retransformClasses(*HookManager.getTargetClasses().toTypedArray())
     }
 
-    // NOTE: Needs to be lazy to not crash before transforming
-    private val defineClass: MethodHandle by lazy {
-        MethodHandles.lookup()
-            .unreflect(
-                ClassLoader::class.java.getDeclaredMethod(
-                    "defineClass",
-                    String::class.java,
-                    ByteArray::class.java,
-                    Int::class.java,
-                    Int::class.java
-                ).also { it.isAccessible = true }
-            )
-    }
-    private fun defineClass(classLoader: ClassLoader, bytes: ByteArray) {
-        defineClass.invoke(classLoader, null, bytes, 0, bytes.size)
+    private val findBootstrapClassOrNull = ClassLoader::class.java.getDeclaredMethod("findBootstrapClassOrNull", String::class.java).also {
+        it.setAccessibleUnsafe(true)
     }
 
     private fun getClassBytes(name: String): ByteArray {
