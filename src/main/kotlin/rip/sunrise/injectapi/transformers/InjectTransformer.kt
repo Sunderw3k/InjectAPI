@@ -12,6 +12,8 @@ import rip.sunrise.injectapi.hooks.inject.modes.ReturnInjection
 import rip.sunrise.injectapi.managers.HookManager
 import rip.sunrise.injectapi.utils.getCapturedDescriptor
 import rip.sunrise.injectapi.utils.getCheckCastReturnBytecode
+import rip.sunrise.injectapi.utils.isHookRunning
+import rip.sunrise.injectapi.utils.setHookRunning
 import java.lang.invoke.CallSite
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
@@ -19,60 +21,56 @@ import java.lang.invoke.MethodType
 class InjectTransformer {
     fun transform(node: ClassNode) {
         node.methods.forEach { method ->
-            method as MethodNode
-
-            val methodHooks = HookManager.getHookMap().values
+            HookManager.getHookMap().values
                 .filterIsInstance<InjectHook>()
                 .filter { Type.getType(it.clazz).internalName == node.name }
                 .filter { it.method.name == method.name && it.method.desc == method.desc }
                 .sortedBy { it.injectionMode.typePriority }
-            if (methodHooks.isEmpty()) return@forEach
+                .forEach { hook ->
+                    if (!hook.validateArguments(method.localVariables as List<LocalVariableNode>)) {
+                        // TODO: Error doesnt work. This is wild
+                        println("Hook '$hook' attempts to capture invalid arguments")
+                    }
 
-            methodHooks.forEach { hook ->
-                if (!hook.validateArguments(method.localVariables as List<LocalVariableNode>)) {
-                    // TODO: Error doesnt work. This is wild
-                    println("Hook '$hook' attempts to capture invalid arguments")
+                    when (hook.injectionMode) {
+                        is HeadInjection -> {
+                            method.instructions.insert(generateHookCode(hook, method))
+                        }
+
+                        is ReturnInjection -> {
+                            method.instructions
+                                .iterator()
+                                .asSequence()
+                                .filterIsInstance<InsnNode>()
+                                .filter {
+                                    it.opcode in arrayOf(
+                                        Opcodes.RETURN,
+                                        Opcodes.ARETURN,
+                                        Opcodes.IRETURN,
+                                        Opcodes.LRETURN,
+                                        Opcodes.FRETURN,
+                                        Opcodes.DRETURN
+                                    )
+                                }.forEach {
+                                    method.instructions.insertBefore(it, generateHookCode(hook, method))
+                                }
+                        }
+
+                        is InvokeInjection -> {
+                            method.instructions
+                                .iterator()
+                                .asSequence()
+                                .filterIsInstance<MethodInsnNode>()
+                                .filter { it.name == hook.injectionMode.method.name && it.desc == hook.injectionMode.method.desc }
+                                .forEach {
+                                    val index = method.instructions.indexOf(it)
+                                    val offset = method.instructions.get(index + hook.injectionMode.offset)
+
+                                    method.instructions.insert(offset, generateHookCode(hook, method))
+                                }
+                        }
+                    }
                 }
-
-                when (hook.injectionMode) {
-                    is HeadInjection -> {
-                        method.instructions.insert(generateHookCode(hook, method))
-                    }
-
-                    is ReturnInjection -> {
-                        method.instructions
-                            .iterator()
-                            .asSequence()
-                            .filterIsInstance<InsnNode>()
-                            .filter {
-                                it.opcode in arrayOf(
-                                    Opcodes.RETURN,
-                                    Opcodes.ARETURN,
-                                    Opcodes.IRETURN,
-                                    Opcodes.LRETURN,
-                                    Opcodes.FRETURN,
-                                    Opcodes.DRETURN
-                                )
-                            }.forEach {
-                                method.instructions.insertBefore(it, generateHookCode(hook, method))
-                            }
-                    }
-
-                    is InvokeInjection -> {
-                        method.instructions
-                            .iterator()
-                            .asSequence()
-                            .filterIsInstance<MethodInsnNode>()
-                            .filter { it.name == hook.injectionMode.method.name && it.desc == hook.injectionMode.method.desc }
-                            .forEach {
-                                val index = method.instructions.indexOf(it)
-                                val offset = method.instructions.get(index + hook.injectionMode.offset)
-
-                                method.instructions.insert(offset, generateHookCode(hook, method))
-                            }
-                    }
-                }
-            }
         }
     }
 
@@ -99,8 +97,16 @@ class InjectTransformer {
      */
     private fun generateHookCode(hook: InjectHook, method: MethodNode): InsnList {
         val contextClass = "@CONTEXT@"
+        val hookId = HookManager.getHookId(hook)
 
         return InsnList().apply {
+            val endLabel = LabelNode()
+
+            isHookRunning(hookId)
+            add(JumpInsnNode(Opcodes.IFNE, endLabel))
+
+            setHookRunning(hookId, true)
+
             // Initialize Context
             add(TypeInsnNode(Opcodes.NEW, contextClass))
             add(InsnNode(Opcodes.DUP))
@@ -128,16 +134,27 @@ class InjectTransformer {
                 ).toMethodDescriptorString(),
                 false
             )
-            val capturedDescriptor = getCapturedDescriptor(method.localVariables as List<LocalVariableNode>, hook.arguments)
-            add(InvokeDynamicInsnNode(
-                "INJECT",
-                "(Ljava/util/Map;$capturedDescriptor)Ljava/util/Map;",
-                hookHandle,
-                HookManager.getHookId(hook)
-            ))
+            val capturedDescriptor =
+                getCapturedDescriptor(method.localVariables as List<LocalVariableNode>, hook.arguments)
+            add(
+                InvokeDynamicInsnNode(
+                    "INJECT",
+                    "(Ljava/util/Map;$capturedDescriptor)Ljava/util/Map;",
+                    hookHandle,
+                    hookId
+                )
+            )
 
             // Deserialize
-            add(MethodInsnNode(Opcodes.INVOKESTATIC, contextClass, "deserialize", "(Ljava/util/Map;)L${contextClass};", false))
+            add(
+                MethodInsnNode(
+                    Opcodes.INVOKESTATIC,
+                    contextClass,
+                    "deserialize",
+                    "(Ljava/util/Map;)L${contextClass};",
+                    false
+                )
+            )
 
             // Get optional
             add(FieldInsnNode(Opcodes.GETFIELD, contextClass, "returnValue", "Ljava/util/Optional;"))
@@ -152,11 +169,15 @@ class InjectTransformer {
 
             // True Branch
             add(MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/util/Optional", "get", "()Ljava/lang/Object;", false))
+            setHookRunning(hookId, false)
             add(getCheckCastReturnBytecode(Type.getReturnType(method.desc)))
 
             // IF FALSE
             add(falseLabel)
             add(InsnNode(Opcodes.POP))
+            setHookRunning(hookId, false)
+
+            add(endLabel)
         }
     }
 }

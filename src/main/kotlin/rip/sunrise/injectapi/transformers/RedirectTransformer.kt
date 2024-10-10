@@ -7,6 +7,8 @@ import org.objectweb.asm.tree.*
 import rip.sunrise.injectapi.hooks.redirect.field.FieldRedirectHook
 import rip.sunrise.injectapi.managers.HookManager
 import rip.sunrise.injectapi.utils.getCapturedDescriptor
+import rip.sunrise.injectapi.utils.isHookRunning
+import rip.sunrise.injectapi.utils.setHookRunning
 import java.lang.invoke.CallSite
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
@@ -14,36 +16,45 @@ import java.lang.invoke.MethodType
 class RedirectTransformer {
     fun transform(node: ClassNode) {
         node.methods.forEach { method ->
-            val methodHooks = HookManager.getHookMap().values
+            HookManager.getHookMap().values
                 .filterIsInstance<FieldRedirectHook>()
                 .filter { Type.getType(it.clazz).internalName == node.name }
                 .filter { it.method.name == method.name && it.method.desc == method.desc }
-            if (methodHooks.isEmpty()) return@forEach
+                .forEach { hook ->
+                    method.instructions
+                        .filterIsInstance<FieldInsnNode>()
+                        .filter { it.name == hook.targetField.name && it.desc == hook.targetField.type }
+                        .filter { it.opcode in hook.type.allowedOpcodes }
+                        .forEach {
+                            val hookCode = generateHookCode(hook, it, method)
 
-            methodHooks.forEach { hook ->
-                method.instructions
-                    .filterIsInstance<FieldInsnNode>()
-                    .filter { it.name == hook.targetField.name && it.desc == hook.targetField.type }
-                    .filter { it.opcode in hook.type.allowedOpcodes }
-                    .forEach {
-                        val hookCode = generateHookCode(hook, it, method)
+                            when (it.opcode) {
+                                in listOf(Opcodes.GETFIELD, Opcodes.GETSTATIC) -> {
+                                    method.instructions.insert(it, hookCode)
+                                }
 
-                        when (it.opcode) {
-                            in listOf(Opcodes.GETFIELD, Opcodes.GETSTATIC) -> {
-                                method.instructions.insert(it, hookCode)
+                                in listOf(Opcodes.PUTFIELD, Opcodes.PUTSTATIC) -> {
+                                    method.instructions.insertBefore(it, hookCode)
+                                }
+
+                                else -> error("Disallowed opcode ${it.opcode} while redirecting fields")
                             }
-                            in listOf(Opcodes.PUTFIELD, Opcodes.PUTSTATIC) -> {
-                                method.instructions.insertBefore(it, hookCode)
-                            }
-                            else -> error("Disallowed opcode ${it.opcode} while redirecting fields")
                         }
-                    }
-            }
+                }
         }
     }
 
     private fun generateHookCode(hook: FieldRedirectHook, field: FieldInsnNode, method: MethodNode): InsnList {
+        val hookId = HookManager.getHookId(hook)
+
         return InsnList().apply {
+            val endLabel = LabelNode()
+
+            isHookRunning(hookId)
+            add(JumpInsnNode(Opcodes.IFNE, endLabel))
+
+            setHookRunning(hookId, true)
+
             // Load args
             hook.arguments.forEach {
                 add(VarInsnNode(it.opcode, it.index))
@@ -70,8 +81,11 @@ class RedirectTransformer {
                 "REDIRECT_FIELD",
                 "($fieldType$capturedDescriptor)$fieldType",
                 hookHandle,
-                HookManager.getHookId(hook)
+                hookId
             ))
+            setHookRunning(hookId, false)
+
+            add(endLabel)
         }
     }
 }
