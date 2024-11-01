@@ -4,6 +4,7 @@ import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.ClassNode
+import rip.sunrise.injectapi.InjectApi
 import rip.sunrise.injectapi.debug.ClassDumper
 import rip.sunrise.injectapi.managers.HookManager
 import java.lang.instrument.ClassFileTransformer
@@ -14,7 +15,6 @@ import java.security.ProtectionDomain
  * The main transformer which adds hooks into classes.
  *
  * Note: Already loaded classes require a reload.
- * @see HookManager.getTargetClasses
  * @see Instrumentation.retransformClasses
  */
 class GlobalTransformer(private val dumper: ClassDumper? = null) : ClassFileTransformer {
@@ -25,14 +25,17 @@ class GlobalTransformer(private val dumper: ClassDumper? = null) : ClassFileTran
         protectionDomain: ProtectionDomain?,
         classfileBuffer: ByteArray
     ): ByteArray {
-        // Check whether any hook applies to this class
-        if (HookManager.getHookMap().values.none { it.clazz.name.replace(".", "/") == className }) return classfileBuffer
+        val hooks = HookManager.getHookMap().values
+        if (hooks.none { it.className.replace(".", "/") == className }) return classfileBuffer
+        if (hooks.none { it.classLoader.isEmpty || it.classLoader.get() == loader }) return classfileBuffer
 
         val node = ClassReader(classfileBuffer).let {
             val node = ClassNode(Opcodes.ASM5)
             it.accept(node, 0)
             node
         }
+
+        InjectApi.setupClassLoader(loader)
 
         // Run transformers
         InjectTransformer().transform(node)

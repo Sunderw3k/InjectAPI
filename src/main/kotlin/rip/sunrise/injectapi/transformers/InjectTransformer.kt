@@ -23,7 +23,7 @@ class InjectTransformer {
         node.methods.forEach { method ->
             HookManager.getHookMap().values
                 .filterIsInstance<InjectHook>()
-                .filter { Type.getType(it.clazz).internalName == node.name }
+                .filter { it.className.replace(".", "/") == node.name }
                 .filter { it.method.name == method.name && it.method.desc == method.desc }
                 .sortedBy { it.injectionMode.typePriority }
                 .forEach { hook ->

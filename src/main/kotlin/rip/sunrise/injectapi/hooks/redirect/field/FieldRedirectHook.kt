@@ -7,15 +7,35 @@ import rip.sunrise.injectapi.hooks.TargetField
 import rip.sunrise.injectapi.hooks.TargetMethod
 import rip.sunrise.injectapi.utils.extensions.toMethodHandle
 import java.lang.invoke.MethodHandle
+import java.util.*
 
 class FieldRedirectHook(
     val type: Type,
-    clazz: Class<*>,
+    className: String,
+    classLoader: Optional<ClassLoader>,
     method: TargetMethod,
     val targetField: TargetField,
     val arguments: List<CapturedArgument>,
     handle: MethodHandle
-) : Hook(clazz, method, handle) {
+) : Hook(className, classLoader, method, handle) {
+    constructor(
+        type: Type,
+        clazz: Class<*>,
+        method: TargetMethod,
+        targetField: TargetField,
+        arguments: List<CapturedArgument> = emptyList(),
+        handle: MethodHandle
+    ) : this(type, clazz.name, Optional.ofNullable(clazz.classLoader), method, targetField, arguments, handle)
+
+    constructor(
+        type: Type,
+        className: String,
+        method: TargetMethod,
+        targetField: TargetField,
+        arguments: List<CapturedArgument> = emptyList(),
+        handle: MethodHandle
+    ) : this(type, className, Optional.empty(), method, targetField, arguments, handle)
+
     constructor(
         type: Type,
         clazz: Class<*>,
@@ -24,6 +44,15 @@ class FieldRedirectHook(
         arguments: List<CapturedArgument> = emptyList(),
         hook: Function<*>
     ) : this(type, clazz, method, targetField, arguments, hook.toMethodHandle())
+
+    constructor(
+        type: Type,
+        className: String,
+        method: TargetMethod,
+        targetField: TargetField,
+        arguments: List<CapturedArgument> = emptyList(),
+        hook: Function<*>
+    ) : this(type, className, method, targetField, arguments, hook.toMethodHandle())
 
     enum class Type(val allowedOpcodes: List<Int>) {
         GET(listOf(Opcodes.GETFIELD, Opcodes.GETSTATIC)),

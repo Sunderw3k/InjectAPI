@@ -3,7 +3,6 @@ package rip.sunrise.injectapi.managers
 import com.google.common.collect.HashBiMap
 import com.google.common.collect.ImmutableBiMap
 import rip.sunrise.injectapi.hooks.Hook
-import rip.sunrise.injectapi.hooks.inject.InjectHook
 
 object HookManager {
     /**
@@ -41,12 +40,5 @@ object HookManager {
      */
     fun getHookId(hook: Hook): Int {
         return hookMap.inverse()[hook] ?: throw NoSuchElementException("Hook '$hook' has no ID assigned")
-    }
-
-    /**
-     * Returns a set containing all classes targeted by currently added hooks.
-     */
-    fun getTargetClasses(): Set<Class<*>> {
-        return hookMap.values.map { it.clazz }.toSet()
     }
 }

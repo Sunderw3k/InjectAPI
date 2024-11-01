@@ -9,6 +9,7 @@ import rip.sunrise.injectapi.utils.extensions.toMethodHandle
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
+import java.util.*
 
 /**
  * A hook made for injecting extra calls into methods.
@@ -17,11 +18,28 @@ import java.lang.invoke.MethodType
  */
 class InjectHook(
     val injectionMode: InjectionMode,
-    clazz: Class<*>,
+    className: String,
+    classLoader: Optional<ClassLoader>,
     method: TargetMethod,
     val arguments: List<CapturedArgument>,
     handle: MethodHandle
-) : Hook(clazz, method, handle.transformInjectHandle()) {
+) : Hook(className, classLoader, method, handle.transformInjectHandle()) {
+    constructor(
+        injectionMode: InjectionMode,
+        clazz: Class<*>,
+        method: TargetMethod,
+        arguments: List<CapturedArgument>,
+        handle: MethodHandle
+    ) : this(injectionMode, clazz.name, Optional.ofNullable(clazz.classLoader), method, arguments, handle)
+
+    constructor(
+        injectionMode: InjectionMode,
+        className: String,
+        method: TargetMethod,
+        arguments: List<CapturedArgument>,
+        handle: MethodHandle
+    ) : this(injectionMode, className, Optional.empty(), method, arguments, handle)
+
     constructor(
         injectionMode: InjectionMode,
         clazz: Class<*>,
@@ -29,6 +47,14 @@ class InjectHook(
         arguments: List<CapturedArgument>,
         hook: Function<Unit>
     ) : this(injectionMode, clazz, method, arguments, hook.toMethodHandle())
+
+    constructor(
+        injectionMode: InjectionMode,
+        className: String,
+        method: TargetMethod,
+        arguments: List<CapturedArgument>,
+        hook: Function<Unit>
+    ) : this(injectionMode, className, method, arguments, hook.toMethodHandle())
 
     /**
      * Validates whether [arguments] are valid given the known local [variables].
