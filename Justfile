@@ -1,4 +1,4 @@
-LIBRARY_VERSION := "0.5.0"
+LIBRARY_VERSION := "0.6.0"
 LIBRARY_PATH :=  justfile_directory() + "/build/libs/InjectAPI-" + LIBRARY_VERSION + "-all.jar"
 MANIFEST_PATH :=  justfile_directory() + "/tests/MANIFEST.MF"
 
