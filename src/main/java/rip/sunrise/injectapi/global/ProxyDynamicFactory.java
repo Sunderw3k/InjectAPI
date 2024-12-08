@@ -22,7 +22,7 @@ public class ProxyDynamicFactory {
      */
     @SuppressWarnings("ReplaceOnLiteralHasNoEffect")
     public static CallSite bootstrap(MethodHandles.Lookup caller, String name, MethodType type, int hookId) {
-        System.out.println("Got invokedynamic call from" + caller + " for hookId " + hookId);
+        System.out.println("Got invokedynamic call from " + caller + " for hookId " + hookId);
 
         try {
             Class<?> managerClass = classLoader.loadClass("@HOOK_MANAGER@".replace("/", "."));
