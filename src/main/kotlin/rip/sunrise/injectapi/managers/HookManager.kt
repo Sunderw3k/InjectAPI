@@ -3,7 +3,6 @@ package rip.sunrise.injectapi.managers
 import com.google.common.collect.HashBiMap
 import com.google.common.collect.ImmutableBiMap
 import rip.sunrise.injectapi.hooks.Hook
-import rip.sunrise.injectapi.hooks.inject.InjectHook
 
 object HookManager {
     /**

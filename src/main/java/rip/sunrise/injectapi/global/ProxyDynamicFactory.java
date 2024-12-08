@@ -1,7 +1,6 @@
 package rip.sunrise.injectapi.global;
 
 import java.lang.invoke.*;
-import java.util.BitSet;
 
 public class ProxyDynamicFactory {
     /**
@@ -12,9 +11,10 @@ public class ProxyDynamicFactory {
 
     /**
      * Used from within the internal hook code to make sure we are not going into recursion.
+     * Instantly set after class definition, reset on transform.
      */
     @SuppressWarnings("unused")
-    public static BitSet runningHooks = new BitSet();
+    public static ThreadLocal<boolean[]> runningHooks = ThreadLocal.withInitial(() -> new boolean[0]);
 
     /**
      * Called from hooks. This is the bridge between any ClassLoader and the InjectAPI ClassLoader.

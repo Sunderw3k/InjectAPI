@@ -7,6 +7,7 @@ import org.objectweb.asm.tree.*
 import rip.sunrise.injectapi.hooks.redirect.field.FieldRedirectHook
 import rip.sunrise.injectapi.managers.HookManager
 import rip.sunrise.injectapi.utils.getCapturedDescriptor
+import rip.sunrise.injectapi.utils.getLocalRunningHookArray
 import rip.sunrise.injectapi.utils.isHookRunning
 import rip.sunrise.injectapi.utils.setHookRunning
 import java.lang.invoke.CallSite
@@ -50,9 +51,14 @@ class RedirectTransformer {
         return InsnList().apply {
             val endLabel = LabelNode()
 
+            getLocalRunningHookArray()
+            add(InsnNode(Opcodes.DUP))
+            add(VarInsnNode(Opcodes.ASTORE, 101))
+
             isHookRunning(hookId)
             add(JumpInsnNode(Opcodes.IFNE, endLabel))
 
+            add(VarInsnNode(Opcodes.ALOAD, 101))
             setHookRunning(hookId, true)
 
             // Load args
@@ -83,6 +89,7 @@ class RedirectTransformer {
                 hookHandle,
                 hookId
             ))
+            add(VarInsnNode(Opcodes.ALOAD, 101))
             setHookRunning(hookId, false)
 
             add(endLabel)

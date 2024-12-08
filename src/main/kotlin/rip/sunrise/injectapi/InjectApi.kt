@@ -33,11 +33,19 @@ object InjectApi {
                 defineClass(getClassBytes(Type.getInternalName(ProxyDynamicFactory::class.java)), it, null)
             }
 
-            if (it == null) {
+            val dynamicFactory = if (it == null) {
                 findBootstrapClassOrNull.invoke(null, ProxyDynamicFactory::class.java.name) as Class<*>
             } else {
                 it.loadClass(ProxyDynamicFactory::class.java.name)
-            }.getDeclaredField("classLoader").set(null, InjectApi::class.java.classLoader)
+            }
+
+            // Set the InjectAPI ClassLoader
+            dynamicFactory.getDeclaredField("classLoader").set(null, InjectApi::class.java.classLoader)
+
+            // Resize the running hooks array
+            // TODO: This doesn't copy the previous values, hooks may go into single depth recursion.
+            dynamicFactory.getDeclaredField("runningHooks")
+                .set(null, ThreadLocal.withInitial { BooleanArray(HookManager.getHookMap().size) })
         }
 
         // Retransform

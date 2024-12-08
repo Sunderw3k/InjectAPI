@@ -10,10 +10,7 @@ import rip.sunrise.injectapi.hooks.inject.modes.HeadInjection
 import rip.sunrise.injectapi.hooks.inject.modes.InvokeInjection
 import rip.sunrise.injectapi.hooks.inject.modes.ReturnInjection
 import rip.sunrise.injectapi.managers.HookManager
-import rip.sunrise.injectapi.utils.getCapturedDescriptor
-import rip.sunrise.injectapi.utils.getCheckCastReturnBytecode
-import rip.sunrise.injectapi.utils.isHookRunning
-import rip.sunrise.injectapi.utils.setHookRunning
+import rip.sunrise.injectapi.utils.*
 import java.lang.invoke.CallSite
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
@@ -99,12 +96,19 @@ class InjectTransformer {
         val contextClass = "@CONTEXT@"
         val hookId = HookManager.getHookId(hook)
 
+        // TODO: Remove the STORE/LOAD for runningHook array
         return InsnList().apply {
             val endLabel = LabelNode()
+
+            // Check and set running state
+            getLocalRunningHookArray()
+            add(InsnNode(Opcodes.DUP))
+            add(VarInsnNode(Opcodes.ASTORE, 101))
 
             isHookRunning(hookId)
             add(JumpInsnNode(Opcodes.IFNE, endLabel))
 
+            add(VarInsnNode(Opcodes.ALOAD, 101))
             setHookRunning(hookId, true)
 
             // Initialize Context
@@ -169,12 +173,14 @@ class InjectTransformer {
 
             // True Branch
             add(MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/util/Optional", "get", "()Ljava/lang/Object;", false))
+            add(VarInsnNode(Opcodes.ALOAD, 101))
             setHookRunning(hookId, false)
             add(getCheckCastReturnBytecode(Type.getReturnType(method.desc)))
 
             // IF FALSE
             add(falseLabel)
             add(InsnNode(Opcodes.POP))
+            add(VarInsnNode(Opcodes.ALOAD, 101))
             setHookRunning(hookId, false)
 
             add(endLabel)
