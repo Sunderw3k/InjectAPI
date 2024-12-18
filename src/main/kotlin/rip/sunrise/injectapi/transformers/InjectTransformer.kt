@@ -166,27 +166,32 @@ class InjectTransformer {
                 )
             )
 
-            // Get optional
-            add(FieldInsnNode(Opcodes.GETFIELD, contextClass, "returnValue", "Ljava/util/Optional;"))
-            add(InsnNode(Opcodes.DUP))
+            if (Type.getReturnType(method.desc) != Type.VOID_TYPE) {
+                // Get optional
+                add(FieldInsnNode(Opcodes.GETFIELD, contextClass, "returnValue", "Ljava/util/Optional;"))
+                add(InsnNode(Opcodes.DUP))
 
-            // Get optional value and check if its present
-            add(MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/util/Optional", "isPresent", "()Z", false))
+                // Get optional value and check if its present
+                add(MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/util/Optional", "isPresent", "()Z", false))
 
-            // If optional has value return value
-            val falseLabel = LabelNode(Label())
-            add(JumpInsnNode(Opcodes.IFEQ, falseLabel))
+                // If optional has value return value
+                val falseLabel = LabelNode(Label())
+                add(JumpInsnNode(Opcodes.IFEQ, falseLabel))
 
-            // True Branch
-            add(MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/util/Optional", "get", "()Ljava/lang/Object;", false))
-            add(InsnNode(Opcodes.SWAP))
-            setHookRunning(hookId, false)
-            add(getCheckCastReturnBytecode(Type.getReturnType(method.desc)))
+                // True Branch
+                add(MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/util/Optional", "get", "()Ljava/lang/Object;", false))
+                add(InsnNode(Opcodes.SWAP))
+                setHookRunning(hookId, false)
+                add(getCheckCastReturnBytecode(Type.getReturnType(method.desc)))
 
-            // False Branch
-            add(falseLabel) // Stack: [Hook Array, Optional]
-            add(InsnNode(Opcodes.POP))
-            
+                // False Branch
+                add(falseLabel) // Stack: [Hook Array, Optional]
+                add(InsnNode(Opcodes.POP))
+            } else {
+                // Pop the Context
+                add(InsnNode(Opcodes.POP))
+            }
+
             setHookRunning(hookId, false)
             add(endLabel)
         }
