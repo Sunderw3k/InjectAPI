@@ -96,20 +96,26 @@ class InjectTransformer {
         val contextClass = "@CONTEXT@"
         val hookId = HookManager.getHookId(hook)
 
-        // TODO: Remove the STORE/LOAD for runningHook array
         return InsnList().apply {
             val endLabel = LabelNode()
 
             // Check and set running state
             getLocalRunningHookArray()
+
             add(InsnNode(Opcodes.DUP))
-            add(VarInsnNode(Opcodes.ASTORE, 101))
-
             isHookRunning(hookId)
-            add(JumpInsnNode(Opcodes.IFNE, endLabel))
 
-            add(VarInsnNode(Opcodes.ALOAD, 101))
+            val ifNotRunningLabel = LabelNode()
+            add(JumpInsnNode(Opcodes.IFEQ, ifNotRunningLabel))
+
+            add(InsnNode(Opcodes.POP))
+            add(JumpInsnNode(Opcodes.GOTO, endLabel))
+
+            add(ifNotRunningLabel)
+
+            add(InsnNode(Opcodes.DUP))
             setHookRunning(hookId, true)
+            // Actual bootstrap entry. Stack: [Hook Array]
 
             // Initialize Context
             add(TypeInsnNode(Opcodes.NEW, contextClass))
@@ -173,16 +179,15 @@ class InjectTransformer {
 
             // True Branch
             add(MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/util/Optional", "get", "()Ljava/lang/Object;", false))
-            add(VarInsnNode(Opcodes.ALOAD, 101))
+            add(InsnNode(Opcodes.SWAP))
             setHookRunning(hookId, false)
             add(getCheckCastReturnBytecode(Type.getReturnType(method.desc)))
 
-            // IF FALSE
-            add(falseLabel)
+            // False Branch
+            add(falseLabel) // Stack: [Hook Array, Optional]
             add(InsnNode(Opcodes.POP))
-            add(VarInsnNode(Opcodes.ALOAD, 101))
+            
             setHookRunning(hookId, false)
-
             add(endLabel)
         }
     }

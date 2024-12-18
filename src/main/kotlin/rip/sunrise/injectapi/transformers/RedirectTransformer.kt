@@ -52,14 +52,22 @@ class RedirectTransformer {
             val endLabel = LabelNode()
 
             getLocalRunningHookArray()
+
             add(InsnNode(Opcodes.DUP))
-            add(VarInsnNode(Opcodes.ASTORE, 101))
-
             isHookRunning(hookId)
-            add(JumpInsnNode(Opcodes.IFNE, endLabel))
 
-            add(VarInsnNode(Opcodes.ALOAD, 101))
+            val ifNotRunningLabel = LabelNode()
+            add(JumpInsnNode(Opcodes.IFEQ, ifNotRunningLabel))
+
+            add(InsnNode(Opcodes.POP))
+            add(JumpInsnNode(Opcodes.GOTO, endLabel))
+
+            add(ifNotRunningLabel)
+
+            add(InsnNode(Opcodes.DUP))
             setHookRunning(hookId, true)
+
+            add(InsnNode(Opcodes.SWAP))
 
             // Load args
             hook.arguments.forEach {
@@ -89,9 +97,9 @@ class RedirectTransformer {
                 hookHandle,
                 hookId
             ))
-            add(VarInsnNode(Opcodes.ALOAD, 101))
-            setHookRunning(hookId, false)
 
+            add(InsnNode(Opcodes.SWAP))
+            setHookRunning(hookId, false)
             add(endLabel)
         }
     }
