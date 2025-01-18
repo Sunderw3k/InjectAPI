@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 plugins {
     kotlin("jvm") version "2.0.0"
     id("io.github.goooler.shadow") version "8.1.8"
+    `maven-publish`
 }
 
 group = project.property("group") as String
@@ -17,6 +18,14 @@ val include: Configuration by configurations.creating {
 
 repositories {
     mavenCentral()
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("release") {
+            from(components["java"])
+        }
+    }
 }
 
 dependencies {
