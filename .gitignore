@@ -4,8 +4,5 @@
 
 !.idea/runConfigurations/
 
-gradlew
-gradlew.bat
-
 build/
 run/
