@@ -2,11 +2,7 @@ package rip.sunrise.injectapi.utils
 
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
-import org.objectweb.asm.tree.InsnList
-import org.objectweb.asm.tree.InsnNode
-import org.objectweb.asm.tree.LocalVariableNode
-import org.objectweb.asm.tree.MethodInsnNode
-import org.objectweb.asm.tree.TypeInsnNode
+import org.objectweb.asm.tree.*
 import rip.sunrise.injectapi.hooks.CapturedArgument
 
 /**
@@ -44,8 +40,23 @@ fun getCheckCastReturnBytecode(type: Type): InsnList {
 }
 
 /**
- * Returns the descriptor of the parameters from known method [variables] and requested [capturedArguments].
+ * Returns the descriptor of the parameters from requested [capturedArguments].
  */
-fun getCapturedDescriptor(variables: List<LocalVariableNode>, capturedArguments: List<CapturedArgument>): String {
-    return capturedArguments.joinToString("") { variables.first { variable -> variable.index == it.index }.desc }
+fun getCapturedDescriptor(
+    capturedArguments: List<CapturedArgument>,
+    method: MethodNode,
+    classType: String
+): String {
+    // TODO: Some sanity checking if the args are valid
+
+    val arguments = Type.getArgumentTypes(method.desc)
+    val isVirtual = method.access and Opcodes.ACC_STATIC == 0
+
+    return capturedArguments.joinToString("") {
+        if (isVirtual && it.index == 0) {
+            "L$classType;" // this
+        } else if (isVirtual) {
+            arguments[it.index - 1].descriptor // virtual 1 is arguments[0]
+        } else arguments[it.index].descriptor // static 1 is arguments[1]
+    }
 }

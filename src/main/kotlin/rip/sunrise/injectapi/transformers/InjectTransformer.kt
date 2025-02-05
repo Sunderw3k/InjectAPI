@@ -24,14 +24,10 @@ class InjectTransformer {
                 .filter { it.method.name == method.name && it.method.desc == method.desc }
                 .sortedBy { it.injectionMode.typePriority }
                 .forEach { hook ->
-                    if (!hook.validateArguments(method.localVariables as List<LocalVariableNode>)) {
-                        // TODO: Error doesnt work. This is wild
-                        println("Hook '$hook' attempts to capture invalid arguments")
-                    }
-
+                    val hookCode = generateHookCode(hook, method, node)
                     when (hook.injectionMode) {
                         is HeadInjection -> {
-                            method.instructions.insert(generateHookCode(hook, method))
+                            method.instructions.insert(hookCode)
                         }
 
                         is ReturnInjection -> {
@@ -49,7 +45,7 @@ class InjectTransformer {
                                         Opcodes.DRETURN
                                     )
                                 }.forEach {
-                                    method.instructions.insertBefore(it, generateHookCode(hook, method))
+                                    method.instructions.insertBefore(it, hookCode)
                                 }
                         }
 
@@ -63,7 +59,7 @@ class InjectTransformer {
                                     val index = method.instructions.indexOf(it)
                                     val offset = method.instructions.get(index + hook.injectionMode.offset)
 
-                                    method.instructions.insert(offset, generateHookCode(hook, method))
+                                    method.instructions.insert(offset, hookCode)
                                 }
                         }
                     }
@@ -92,7 +88,7 @@ class InjectTransformer {
      * @see HookManager.getHookId
      * @see rip.sunrise.injectapi.global.ProxyDynamicFactory.bootstrap
      */
-    private fun generateHookCode(hook: InjectHook, method: MethodNode): InsnList {
+    private fun generateHookCode(hook: InjectHook, method: MethodNode, clazz: ClassNode): InsnList {
         val contextClass = "@CONTEXT@"
         val hookId = HookManager.getHookId(hook)
 
@@ -144,8 +140,8 @@ class InjectTransformer {
                 ).toMethodDescriptorString(),
                 false
             )
-            val capturedDescriptor =
-                getCapturedDescriptor(method.localVariables as List<LocalVariableNode>, hook.arguments)
+
+            val capturedDescriptor = getCapturedDescriptor(hook.arguments, method, clazz.name)
             add(
                 InvokeDynamicInsnNode(
                     "INJECT",

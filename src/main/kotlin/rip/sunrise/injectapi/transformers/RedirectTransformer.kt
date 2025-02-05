@@ -27,7 +27,7 @@ class RedirectTransformer {
                         .filter { it.name == hook.targetField.name && it.desc == hook.targetField.type }
                         .filter { it.opcode in hook.type.allowedOpcodes }
                         .forEach {
-                            val hookCode = generateHookCode(hook, it, method)
+                            val hookCode = generateHookCode(hook, it, method, node)
 
                             when (it.opcode) {
                                 in listOf(Opcodes.GETFIELD, Opcodes.GETSTATIC) -> {
@@ -45,7 +45,7 @@ class RedirectTransformer {
         }
     }
 
-    private fun generateHookCode(hook: FieldRedirectHook, field: FieldInsnNode, method: MethodNode): InsnList {
+    private fun generateHookCode(hook: FieldRedirectHook, field: FieldInsnNode, method: MethodNode, clazz: ClassNode): InsnList {
         val hookId = HookManager.getHookId(hook)
 
         return InsnList().apply {
@@ -90,7 +90,7 @@ class RedirectTransformer {
             )
 
             val fieldType = field.desc
-            val capturedDescriptor = getCapturedDescriptor(method.localVariables, hook.arguments)
+            val capturedDescriptor = getCapturedDescriptor(hook.arguments, method, clazz.name)
             add(InvokeDynamicInsnNode(
                 "REDIRECT_FIELD",
                 "($fieldType$capturedDescriptor)$fieldType",

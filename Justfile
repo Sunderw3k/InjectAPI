@@ -12,7 +12,7 @@ build test_name:
 
 	cp "{{LIBRARY_PATH}}" InjectAPI-all.jar
 
-	javac -d . ../App.java
+	javac -g:none -d . ../App.java
 	jar -cf App.jar App.class
 
 	kotlinc -jvm-target 21 -include-runtime -cp "InjectAPI-all.jar:App.jar" -d Agent.jar ../Agent.kt
