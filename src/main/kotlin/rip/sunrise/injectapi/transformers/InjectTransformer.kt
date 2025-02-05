@@ -161,38 +161,35 @@ class InjectTransformer {
                     Opcodes.INVOKESTATIC,
                     contextClass,
                     "deserialize",
-                    "(Ljava/util/Map;)L${contextClass};",
+                    "(Ljava/util/Map;)L$contextClass;",
                     false
                 )
             )
 
-                // Get optional
-                add(FieldInsnNode(Opcodes.GETFIELD, contextClass, "returnValue", "Ljava/util/Optional;"))
-                add(InsnNode(Opcodes.DUP))
+            // Get optional
+            add(InsnNode(Opcodes.DUP))
+            add(MethodInsnNode(Opcodes.INVOKEVIRTUAL, contextClass, "hasReturnValue", "()Z"))
 
-                // Get optional value and check if its present
-                add(MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/util/Optional", "isPresent", "()Z", false))
+            // If Context has value, return value
+            val falseLabel = LabelNode(Label())
+            add(JumpInsnNode(Opcodes.IFEQ, falseLabel))
 
-                // If optional has value return value
-                val falseLabel = LabelNode(Label())
-                add(JumpInsnNode(Opcodes.IFEQ, falseLabel))
-
-                // True Branch
-                if (Type.getReturnType(method.desc) != Type.VOID_TYPE) {
-                    // Get the optional value
-                    add(MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/util/Optional", "get", "()Ljava/lang/Object;", false))
-                    add(InsnNode(Opcodes.SWAP))
-                } else {
-                    // Pop the optional
-                    add(InsnNode(Opcodes.POP))
-                }
-
-                setHookRunning(hookId, false)
-                add(getCheckCastReturnBytecode(Type.getReturnType(method.desc)))
-
-                // False Branch
-                add(falseLabel) // Stack: [Hook Array, Optional]
+            // True Branch
+            if (Type.getReturnType(method.desc) != Type.VOID_TYPE) {
+                // Get the optional value
+                add(FieldInsnNode(Opcodes.GETFIELD, contextClass, "returnValue", "Ljava/lang/Object;"))
+                add(InsnNode(Opcodes.SWAP))
+            } else {
+                // Pop the optional
                 add(InsnNode(Opcodes.POP))
+            }
+
+            setHookRunning(hookId, false)
+            add(getCheckCastReturnBytecode(Type.getReturnType(method.desc)))
+
+            // False Branch
+            add(falseLabel) // Stack: [Hook Array, Context]
+            add(InsnNode(Opcodes.POP))
 
             setHookRunning(hookId, false)
             add(endLabel)
