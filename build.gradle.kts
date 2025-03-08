@@ -12,10 +12,6 @@ group = project.property("group") as String
 version = project.property("version") as String
 base.archivesName.set("InjectAPI")
 
-val include: Configuration by configurations.creating {
-    configurations.implementation.get().extendsFrom(this)
-}
-
 repositories {
     mavenCentral()
 }
@@ -35,6 +31,17 @@ dependencies {
     implementation("org.ow2.asm:asm-tree:$asmVersion")
 
     implementation("com.google.guava:guava:33.2.1-jre")
+
+    testImplementation("net.bytebuddy:byte-buddy-agent:1.17.2")
+    testImplementation(kotlin("test"))
+}
+
+sourceSets {
+    create("testTargets") {
+        java.srcDir("src/test-targets/java")
+        kotlin.srcDir("src/test-targets/kotlin")
+        resources.srcDir("src/test-targets/resources")
+    }
 }
 
 tasks {
@@ -54,6 +61,17 @@ tasks {
         from(sourceSets.main.get().kotlin)
         filter<ReplaceTokens>("tokens" to tokens)
         into("${layout.buildDirectory.get().asFile.absolutePath}/src/kotlin")
+    }
+
+    val buildTestTargetsJar = register<Jar>("buildTestTargetsJar") {
+        archiveBaseName.set("test-targets")
+        archiveVersion.set("")
+        from(sourceSets["testTargets"].output)
+    }
+
+    test {
+        dependsOn(buildTestTargetsJar)
+        useJUnitPlatform()
     }
 
     compileJava {

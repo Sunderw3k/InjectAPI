@@ -1,3 +1,0 @@
-Premain-Class: AgentKt
-Can-Retransform-Classes: true
-Can-Redefine-Classes: true

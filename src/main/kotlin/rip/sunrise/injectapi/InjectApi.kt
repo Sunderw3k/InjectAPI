@@ -44,8 +44,9 @@ object InjectApi {
 
             // Resize the running hooks array
             // TODO: This doesn't copy the previous values, hooks may go into single depth recursion.
+            // TODO: Actually implement removing hooks
             dynamicFactory.getDeclaredField("runningHooks")
-                .set(null, ThreadLocal.withInitial { BooleanArray(HookManager.getHookMap().size) })
+                .set(null, ThreadLocal.withInitial { BooleanArray((HookManager.getHookMap().map { it.key }.max() ?: -1) + 1) })
         }
 
         // Retransform
@@ -60,4 +61,10 @@ object InjectApi {
         return InjectApi::class.java.classLoader.getResourceAsStream("$name.class")?.readAllBytes()
             ?: error("Couldn't find bytes for $name")
     }
+
+    /**
+     * For internal use, very unstable API
+     */
+    @RequiresOptIn(level = RequiresOptIn.Level.ERROR)
+    annotation class Internal
 }

@@ -2,7 +2,10 @@ package rip.sunrise.injectapi.managers
 
 import com.google.common.collect.HashBiMap
 import com.google.common.collect.ImmutableBiMap
+import rip.sunrise.injectapi.InjectApi
 import rip.sunrise.injectapi.hooks.Hook
+import rip.sunrise.injectapi.managers.HookManager.addHook
+import rip.sunrise.injectapi.managers.HookManager.hookMap
 
 object HookManager {
     /**
@@ -23,6 +26,15 @@ object HookManager {
      */
     fun addHook(hook: Hook) {
         hookMap[hookId++] = hook
+    }
+
+    /**
+     * For testing, so that multiple calls to [InjectApi.transform] don't reintroduce broken code.
+     */
+    @InjectApi.Internal
+    fun removeHook(hook: Hook) {
+        val hookId = getHookId(hook)
+        hookMap.remove(hookId)
     }
 
     /**
