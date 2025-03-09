@@ -13,4 +13,5 @@ public class InjectTest {
     public static void testCaptureObjectArgument(Object a) {}
 
     public static void testCaptureThinArgumentAfterThin(int a, int b) {}
+    public static void testCaptureThinArgumentAfterWide(long a, int b) {}
 }

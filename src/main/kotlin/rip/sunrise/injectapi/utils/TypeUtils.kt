@@ -56,11 +56,20 @@ fun getCapturedDescriptor(
     val arguments = Type.getArgumentTypes(method.desc)
     val isVirtual = method.access and Opcodes.ACC_STATIC == 0
 
+    val actualIndices = arguments.runningFold(0) { acc, type ->
+        acc + type.size
+    }.dropLast(1)
+
     return capturedArguments.joinToString("") {
         if (isVirtual && it.index == 0) {
             "L$classType;" // this
-        } else if (isVirtual) {
-            arguments[it.index - 1].descriptor // virtual 1 is arguments[0]
-        } else arguments[it.index].descriptor // static 1 is arguments[1]
-    }.also { println(it) }
+        } else {
+            val index = if (isVirtual) {
+                actualIndices.indexOf(it.index - 1) // virtual 1 is arguments[0]
+            } else actualIndices.indexOf(it.index) // static 1 is arguments[1]
+            if (index == -1) error("No element with index ${it.index}")
+
+            arguments[index].descriptor
+        }
+    }
 }

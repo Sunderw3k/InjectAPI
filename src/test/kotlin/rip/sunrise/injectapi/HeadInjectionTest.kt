@@ -117,6 +117,22 @@ class HeadInjectionTest {
         }
     }
 
+    @Test
+    fun testCaptureThinArgumentAfterWide() {
+        testHookedMethodInvocation("InjectTest", "testCaptureThinArgumentAfterWide", 42L, 69) { clazz, method ->
+            arrayOf(
+                InjectHook(
+                    HeadInjection(),
+                    clazz,
+                    TargetMethod(method.name, Type.getMethodDescriptor(method)),
+                    listOf(CapturedArgument(Opcodes.ILOAD, 2)),
+                ) { ctx: Context, a: Int ->
+                    assertEquals(69, a)
+                }
+            )
+        }
+    }
+
     fun testHookedMethodInvocation(
         className: String,
         methodName: String,

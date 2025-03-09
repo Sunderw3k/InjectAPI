@@ -24,29 +24,32 @@ class GlobalTransformer(private val dumper: ClassDumper? = null) : ClassFileTran
         classBeingRedefined: Class<*>?,
         protectionDomain: ProtectionDomain?,
         classfileBuffer: ByteArray
-    ): ByteArray {
-        // Check whether any hook applies to this class
-        if (HookManager.getHookMap().values.none { it.clazz.name.replace(".", "/") == className }) return classfileBuffer
+    ): ByteArray? {
+        // TODO: https://stackoverflow.com/questions/78421704/java-classfiletransformer-fails-to-throw-exception
+        return runCatching {
+            // Check whether any hook applies to this class
+            if (HookManager.getHookMap().values.none { it.clazz.name.replace(".", "/") == className }) return classfileBuffer
 
-        val node = ClassReader(classfileBuffer).let {
-            val node = ClassNode(Opcodes.ASM5)
-            it.accept(node, 0)
-            node
-        }
+            val node = ClassReader(classfileBuffer).let {
+                val node = ClassNode(Opcodes.ASM5)
+                it.accept(node, 0)
+                node
+            }
 
-        // Run transformers
-        InjectTransformer().transform(node)
-        RedirectTransformer().transform(node)
+            // Run transformers
+            InjectTransformer().transform(node)
+            RedirectTransformer().transform(node)
 
-        val bytes = ClassWriter(ClassWriter.COMPUTE_FRAMES).let {
-            node.accept(it)
-            it.toByteArray()
-        }
+            val bytes = ClassWriter(ClassWriter.COMPUTE_FRAMES).let {
+                node.accept(it)
+                it.toByteArray()
+            }
 
-        // Dump the class, see ClassDumper
-        dumper?.dump(className, bytes)
+            // Dump the class, see ClassDumper
+            dumper?.dump(className, bytes)
 
-        return bytes
+            return@runCatching bytes
+        }.getOrElse { it.printStackTrace(); null }
     }
 
     /**
