@@ -33,7 +33,7 @@ object GlobalTransformer : ClassFileTransformer {
         // TODO: https://stackoverflow.com/questions/78421704/java-classfiletransformer-fails-to-throw-exception
         return runCatching {
             // Check whether any hook applies to this class
-            if (HookManager.getHookMap().values.none { it.clazz.name.replace(".", "/") == className }) return classfileBuffer
+            if (HookManager.getHooks().none { it.clazz.name.replace(".", "/") == className }) return classfileBuffer
 
             // Load cached bytes, so that all previous hooks are removed
             val classBytes = transformedClasses.getOrPut(className) { classfileBuffer }

@@ -26,6 +26,10 @@ object InjectApi {
         AccessWidener.initialize(inst)
         ClassLoader::class.java.module.addOpens("java.lang", InjectApi::class.java.module)
 
+        // Cache hooks
+        @OptIn(Internal::class)
+        val hookCount = HookManager.onTransform()
+
         HookManager.getTargetClasses().map { it.classLoader }.distinct().forEach {
             // In case the classes are defined already, we don't want to load them again.
             if (runCatching { it.loadClass(Context::class.java.name) }.isFailure) {
@@ -51,7 +55,7 @@ object InjectApi {
              */
             // Resize the running hooks array
             dynamicFactory.getDeclaredField("runningHooks")
-                .set(null, ThreadLocal.withInitial { BooleanArray((HookManager.getHookMap().map { it.key }.max() ?: -1) + 1) })
+                .set(null, ThreadLocal.withInitial { BooleanArray(hookCount) })
         }
 
         // Make sure our transformer is last

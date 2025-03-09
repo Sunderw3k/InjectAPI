@@ -4,6 +4,7 @@ import org.objectweb.asm.Handle
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.*
+import rip.sunrise.injectapi.InjectApi
 import rip.sunrise.injectapi.hooks.redirect.field.FieldRedirectHook
 import rip.sunrise.injectapi.managers.HookManager
 import rip.sunrise.injectapi.utils.getCapturedDescriptor
@@ -17,7 +18,7 @@ import java.lang.invoke.MethodType
 class RedirectTransformer {
     fun transform(node: ClassNode) {
         node.methods.forEach { method ->
-            HookManager.getHookMap().values
+            HookManager.getHooks()
                 .filterIsInstance<FieldRedirectHook>()
                 .filter { Type.getType(it.clazz).internalName == node.name }
                 .filter { it.method.name == method.name && it.method.desc == method.desc }
@@ -45,8 +46,9 @@ class RedirectTransformer {
         }
     }
 
+    @OptIn(InjectApi.Internal::class)
     private fun generateHookCode(hook: FieldRedirectHook, field: FieldInsnNode, method: MethodNode, clazz: ClassNode): InsnList {
-        val hookId = HookManager.getHookId(hook)
+        val hookId = HookManager.getCachedHookId(hook)
 
         return InsnList().apply {
             val endLabel = LabelNode()

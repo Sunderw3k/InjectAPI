@@ -5,6 +5,7 @@ import org.objectweb.asm.Label
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.*
+import rip.sunrise.injectapi.InjectApi
 import rip.sunrise.injectapi.hooks.inject.InjectHook
 import rip.sunrise.injectapi.hooks.inject.modes.HeadInjection
 import rip.sunrise.injectapi.hooks.inject.modes.InvokeInjection
@@ -18,7 +19,7 @@ import java.lang.invoke.MethodType
 class InjectTransformer {
     fun transform(node: ClassNode) {
         node.methods.forEach { method ->
-            HookManager.getHookMap().values
+            HookManager.getHooks()
                 .filterIsInstance<InjectHook>()
                 .filter { Type.getType(it.clazz).internalName == node.name }
                 .filter { it.method.name == method.name && it.method.desc == method.desc }
@@ -71,7 +72,7 @@ class InjectTransformer {
      * Generates the [hook] bytecode for [method].
      *
      * The generated code replicates the following code.
-     * The hookId is obtained using [HookManager.getHookId].
+     * The hookId is obtained using [HookManager.getCachedHookId].
      * ```
      * val output = Context().serialize() // Map<String, Any>
      * val input = #invokedynamic hook(output, arg1, arg2, ...) // returns Map<String, Any>
@@ -85,12 +86,13 @@ class InjectTransformer {
      * Note: The output currently holds nothing.
      *
      * @see InjectHook.arguments
-     * @see HookManager.getHookId
+     * @see HookManager.getCachedHookId
      * @see rip.sunrise.injectapi.global.ProxyDynamicFactory.bootstrap
      */
+    @OptIn(InjectApi.Internal::class)
     private fun generateHookCode(hook: InjectHook, method: MethodNode, clazz: ClassNode): InsnList {
         val contextClass = "@CONTEXT@"
-        val hookId = HookManager.getHookId(hook)
+        val hookId = HookManager.getCachedHookId(hook)
 
         return InsnList().apply {
             val endLabel = LabelNode()

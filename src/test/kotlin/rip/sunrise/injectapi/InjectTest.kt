@@ -219,11 +219,11 @@ class InjectTest {
 
     @AfterEach
     fun clearHooks() {
-        HookManager.getHookMap().forEach { (_, hook) ->
+        HookManager.getHooks().forEach {
             @OptIn(InjectApi.Internal::class)
-            HookManager.removeHook(hook)
+            HookManager.removeHook(it)
         }
-        assert(HookManager.getHookMap().isEmpty())
+        assert(HookManager.getHooks().isEmpty())
     }
 
     companion object {

@@ -30,7 +30,7 @@ public class ProxyDynamicFactory {
 
             Object instance = managerClass.getDeclaredField("INSTANCE").get(null);
 
-            Object hook = managerClass.getDeclaredMethod("getHook", int.class).invoke(instance, hookId);
+            Object hook = managerClass.getDeclaredMethod("getCachedHook", int.class).invoke(instance, hookId);
 
             MethodHandle handle = (MethodHandle) hookClass.getDeclaredMethod("getHandle").invoke(hook);
 
