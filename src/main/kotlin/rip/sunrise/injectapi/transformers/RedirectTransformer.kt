@@ -67,7 +67,12 @@ class RedirectTransformer {
             add(InsnNode(Opcodes.DUP))
             setHookRunning(hookId, true)
 
-            add(InsnNode(Opcodes.SWAP))
+            if (hook.targetField.type == "J" || hook.targetField.type == "D") {
+                add(InsnNode(Opcodes.DUP_X2))
+                add(InsnNode(Opcodes.POP))
+            } else {
+                add(InsnNode(Opcodes.SWAP))
+            }
 
             // Load args
             hook.arguments.forEach {
@@ -98,7 +103,12 @@ class RedirectTransformer {
                 hookId
             ))
 
-            add(InsnNode(Opcodes.SWAP))
+            if (hook.targetField.type == "J" || hook.targetField.type == "D") {
+                add(InsnNode(Opcodes.DUP2_X1))
+                add(InsnNode(Opcodes.POP2))
+            } else {
+                add(InsnNode(Opcodes.SWAP))
+            }
             setHookRunning(hookId, false)
             add(endLabel)
         }
