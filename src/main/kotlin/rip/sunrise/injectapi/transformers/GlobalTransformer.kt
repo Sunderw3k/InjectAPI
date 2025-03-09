@@ -13,11 +13,16 @@ import java.security.ProtectionDomain
 /**
  * The main transformer which adds hooks into classes.
  *
- * Note: Already loaded classes require a reload.
+ * NOTE: Excepted to run last, otherwise it might break during a retransform,
+ * where a transformer registered after us left.
  * @see HookManager.getTargetClasses
  * @see Instrumentation.retransformClasses
  */
-class GlobalTransformer(private val dumper: ClassDumper? = null) : ClassFileTransformer {
+object GlobalTransformer : ClassFileTransformer {
+    private val transformedClasses = mutableMapOf<String, ByteArray>()
+
+    var dumper: ClassDumper? = null
+
     override fun transform(
         loader: ClassLoader?,
         className: String,
@@ -30,7 +35,9 @@ class GlobalTransformer(private val dumper: ClassDumper? = null) : ClassFileTran
             // Check whether any hook applies to this class
             if (HookManager.getHookMap().values.none { it.clazz.name.replace(".", "/") == className }) return classfileBuffer
 
-            val node = ClassReader(classfileBuffer).let {
+            // Load cached bytes, so that all previous hooks are removed
+            val classBytes = transformedClasses.getOrPut(className) { classfileBuffer }
+            val node = ClassReader(classBytes).let {
                 val node = ClassNode(Opcodes.ASM5)
                 it.accept(node, 0)
                 node
@@ -50,17 +57,5 @@ class GlobalTransformer(private val dumper: ClassDumper? = null) : ClassFileTran
 
             return@runCatching bytes
         }.getOrElse { it.printStackTrace(); null }
-    }
-
-    /**
-     * Used for registering the global transformer.
-     *
-     * This call is equal to
-     * ```
-     * inst.addTransformer(transformer, true)
-     * ```
-     */
-    fun register(inst: Instrumentation) {
-        inst.addTransformer(this, true)
     }
 }

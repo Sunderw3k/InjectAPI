@@ -5,6 +5,7 @@ import rip.sunrise.injectapi.access.AccessWidener
 import rip.sunrise.injectapi.global.Context
 import rip.sunrise.injectapi.global.ProxyDynamicFactory
 import rip.sunrise.injectapi.managers.HookManager
+import rip.sunrise.injectapi.transformers.GlobalTransformer
 import rip.sunrise.injectapi.utils.defineClass
 import rip.sunrise.injectapi.utils.setAccessibleUnsafe
 import java.lang.instrument.Instrumentation
@@ -42,12 +43,36 @@ object InjectApi {
             // Set the InjectAPI ClassLoader
             dynamicFactory.getDeclaredField("classLoader").set(null, InjectApi::class.java.classLoader)
 
+            /*
+            TODO: Due to the nature of safepoints, it's possible that we transform in bootstrap code,
+             after setting the running flag, and before running the invoke calls.
+             That means it's possible for the hook to do an extra recursive call, before going back to normal.
+             I don't think theres a good way to copy values here, it would require we know whether a hook is executing.
+             */
             // Resize the running hooks array
-            // TODO: This doesn't copy the previous values, hooks may go into single depth recursion.
-            // TODO: Actually implement removing hooks
             dynamicFactory.getDeclaredField("runningHooks")
                 .set(null, ThreadLocal.withInitial { BooleanArray((HookManager.getHookMap().map { it.key }.max() ?: -1) + 1) })
         }
+
+        // Make sure our transformer is last
+        inst.removeTransformer(GlobalTransformer)
+        inst.addTransformer(GlobalTransformer, true)
+
+        val transformerManager = inst::class.java.getDeclaredField("mRetransfomableTransformerManager").also {
+            it.setAccessibleUnsafe(true)
+        }.get(inst)!!
+
+        val transformerListField = transformerManager::class.java.getDeclaredField("mTransformerList").also {
+            it.setAccessibleUnsafe(true)
+        }
+
+        val transformers = (transformerListField.get(transformerManager) as Array<Any>).map {
+            it::class.java.getDeclaredMethod("transformer").also {
+                it.setAccessibleUnsafe(true)
+            }(it)
+        }
+
+        assert(transformers.indexOf(GlobalTransformer) == transformers.size - 1)
 
         // Retransform
         inst.retransformClasses(*HookManager.getTargetClasses().toTypedArray())

@@ -1,5 +1,6 @@
 package rip.sunrise.injectapi
 
+import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.BeforeAll
@@ -13,7 +14,6 @@ import rip.sunrise.injectapi.hooks.inject.InjectHook
 import rip.sunrise.injectapi.hooks.inject.modes.HeadInjection
 import rip.sunrise.injectapi.managers.HookManager
 import rip.sunrise.injectapi.transformers.GlobalTransformer
-import rip.sunrise.injectapi.utils.SanityTransformer
 import kotlin.test.assertEquals
 
 private const val CLASS_NAME = "InjectTest"
@@ -229,9 +229,14 @@ class InjectTest {
     companion object {
         @BeforeAll
         @JvmStatic
-        fun registerTransformer() {
-            instrumentation.addTransformer(SanityTransformer, true)
-            GlobalTransformer().register(instrumentation)
+        fun registerTransformers() {
+            instrumentation.addTransformer(GlobalTransformer, true)
+        }
+
+        @AfterAll
+        @JvmStatic
+        fun unregisterTransformers() {
+            instrumentation.removeTransformer(GlobalTransformer)
         }
     }
 }

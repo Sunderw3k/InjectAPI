@@ -1,5 +1,6 @@
 package rip.sunrise.injectapi
 
+import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -11,7 +12,6 @@ import rip.sunrise.injectapi.hooks.TargetMethod
 import rip.sunrise.injectapi.hooks.redirect.field.FieldRedirectHook
 import rip.sunrise.injectapi.managers.HookManager
 import rip.sunrise.injectapi.transformers.GlobalTransformer
-import rip.sunrise.injectapi.utils.SanityTransformer
 import kotlin.test.assertEquals
 
 private const val CLASS_NAME = "RedirectFieldTest"
@@ -276,9 +276,14 @@ class RedirectFieldTest {
     companion object {
         @BeforeAll
         @JvmStatic
-        fun registerTransformer() {
-            instrumentation.addTransformer(SanityTransformer, true)
-            GlobalTransformer().register(instrumentation)
+        fun registerTransformers() {
+            instrumentation.addTransformer(GlobalTransformer, true)
+        }
+
+        @AfterAll
+        @JvmStatic
+        fun unregisterTransformers() {
+            instrumentation.removeTransformer(GlobalTransformer)
         }
     }
 }
