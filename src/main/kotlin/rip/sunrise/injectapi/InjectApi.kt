@@ -7,6 +7,7 @@ import rip.sunrise.injectapi.global.ProxyDynamicFactory
 import rip.sunrise.injectapi.managers.HookManager
 import rip.sunrise.injectapi.transformers.GlobalTransformer
 import rip.sunrise.injectapi.utils.defineClass
+import rip.sunrise.injectapi.utils.extensions.getRegisteredTransformers
 import rip.sunrise.injectapi.utils.setAccessibleUnsafe
 import java.lang.instrument.Instrumentation
 
@@ -62,20 +63,7 @@ object InjectApi {
         inst.removeTransformer(GlobalTransformer)
         inst.addTransformer(GlobalTransformer, true)
 
-        val transformerManager = inst::class.java.getDeclaredField("mRetransfomableTransformerManager").also {
-            it.setAccessibleUnsafe(true)
-        }.get(inst)!!
-
-        val transformerListField = transformerManager::class.java.getDeclaredField("mTransformerList").also {
-            it.setAccessibleUnsafe(true)
-        }
-
-        val transformers = (transformerListField.get(transformerManager) as Array<Any>).map {
-            it::class.java.getDeclaredMethod("transformer").also {
-                it.setAccessibleUnsafe(true)
-            }(it)
-        }
-
+        val transformers = inst.getRegisteredTransformers()
         assert(transformers.indexOf(GlobalTransformer) == transformers.size - 1)
 
         // Retransform
