@@ -60,6 +60,7 @@ object InjectApi {
         }
 
         // Make sure our transformer is last
+        // NOTE: A javaagent registering doesn't make a difference, unless it gets registered twice or more.
         inst.removeTransformer(GlobalTransformer)
         inst.addTransformer(GlobalTransformer, true)
 

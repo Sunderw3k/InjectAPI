@@ -18,7 +18,7 @@ import java.security.ProtectionDomain
  * @see HookManager.getTargetClasses
  * @see Instrumentation.retransformClasses
  */
-object GlobalTransformer : ClassFileTransformer {
+internal object GlobalTransformer : ClassFileTransformer {
     private val transformedClasses = mutableMapOf<String, ByteArray>()
 
     var dumper: ClassDumper? = null
