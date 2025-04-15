@@ -91,5 +91,11 @@ tasks {
             languageVersion.set(KotlinVersion.KOTLIN_2_0)
         }
     }
+
+    shadowJar {
+        isEnableRelocation = true
+        relocationPrefix = "rip.sunrise.injectapi.shaded"
+    }
+
     build.get().finalizedBy(shadowJar)
 }
