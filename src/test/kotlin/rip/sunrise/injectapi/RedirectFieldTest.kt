@@ -258,6 +258,31 @@ class RedirectFieldTest {
         assertEquals(42L, wideStaticField.get(null))
     }
 
+    /**
+     * The idea is that we can't directly specify the private class in the hook,
+     * using `Any` is going to work because it's an upcast (receiving `Any`, passing in a subclass of `Any`)
+     *
+     * However, the return value is a little sketchy, because it requires `PrivateClass`, and we return `Any`,
+     * and not all `Any` is `PrivateClass`.
+     *
+     * A failed downcast happens at runtime; when invoking the hook, the JVM will throw a `ClassCastException`.
+     */
+    @Test
+    fun testDowncast() {
+        testHookedMethodInvocation(CLASS_NAME, "testDowncast") { clazz, method ->
+            arrayOf(
+                FieldRedirectHook(
+                    FieldRedirectHook.Type.GET,
+                    clazz,
+                    TargetMethod(method.name, Type.getMethodDescriptor(method)),
+                    TargetField("privateClass", CLASS_NAME, "L$CLASS_NAME\$PrivateClass;"),
+                ) { original: Any ->
+                    return@FieldRedirectHook original
+                }
+            )
+        }
+    }
+
     @AfterEach
     fun clearHooks() {
         thinStaticField.set(null, 1)

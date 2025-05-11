@@ -71,4 +71,10 @@ public class RedirectFieldTest {
     public void testCaptureWideArgumentVirtual(long a) {
         wideStaticValue = 1L;
     }
+
+    private static class PrivateClass {}
+    private PrivateClass privateClass = new PrivateClass();
+    public void testDowncast() {
+        PrivateClass pc = privateClass;
+    }
 }
