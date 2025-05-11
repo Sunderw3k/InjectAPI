@@ -25,7 +25,7 @@ class RedirectTransformer {
                 .forEach { hook ->
                     method.instructions
                         .filterIsInstance<FieldInsnNode>()
-                        .filter { it.name == hook.targetField.name && it.desc == hook.targetField.type }
+                        .filter { it.name == hook.targetField.name && it.desc == hook.targetField.type && it.owner == hook.targetField.owner }
                         .filter { it.opcode in hook.type.allowedOpcodes }
                         .forEach {
                             val hookCode = generateHookCode(hook, it, method, node)
