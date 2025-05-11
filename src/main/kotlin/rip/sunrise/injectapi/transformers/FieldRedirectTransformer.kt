@@ -15,7 +15,7 @@ import java.lang.invoke.CallSite
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 
-class RedirectTransformer {
+class FieldRedirectTransformer {
     fun transform(node: ClassNode) {
         node.methods.forEach { method ->
             HookManager.getHooks()

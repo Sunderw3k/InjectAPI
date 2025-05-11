@@ -45,7 +45,8 @@ internal object GlobalTransformer : ClassFileTransformer {
 
             // Run transformers
             InjectTransformer().transform(node)
-            RedirectTransformer().transform(node)
+            FieldRedirectTransformer().transform(node)
+            MethodRedirectTransformer().transform(node)
 
             val bytes = ClassWriter(ClassWriter.COMPUTE_FRAMES).let {
                 node.accept(it)
