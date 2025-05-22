@@ -95,6 +95,8 @@ tasks {
     shadowJar {
         isEnableRelocation = true
         relocationPrefix = "rip.sunrise.injectapi.shaded"
+
+        relocate("kotlin", "kotlin")
     }
 
     build.get().finalizedBy(shadowJar)
