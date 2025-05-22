@@ -38,7 +38,7 @@ internal object GlobalTransformer : ClassFileTransformer {
             // Load cached bytes, so that all previous hooks are removed
             val classBytes = transformedClasses.getOrPut(className) { classfileBuffer }
             val node = ClassReader(classBytes).let {
-                val node = ClassNode(Opcodes.ASM5)
+                val node = ClassNode(Opcodes.ASM9)
                 it.accept(node, 0)
                 node
             }
