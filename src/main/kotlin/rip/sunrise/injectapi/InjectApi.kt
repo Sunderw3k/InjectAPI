@@ -1,7 +1,6 @@
 package rip.sunrise.injectapi
 
 import org.objectweb.asm.Type
-import rip.sunrise.injectapi.access.AccessWidener
 import rip.sunrise.injectapi.global.Context
 import rip.sunrise.injectapi.global.ProxyDynamicFactory
 import rip.sunrise.injectapi.managers.HookManager
@@ -24,8 +23,18 @@ object InjectApi {
      * IMPORTANT: Call from the same ClassLoader which loaded HookManager, or any CL that resolves both of classes to the same one.
      */
     fun transform(inst: Instrumentation) {
-        AccessWidener.initialize(inst)
-        ClassLoader::class.java.module.addOpens("java.lang", InjectApi::class.java.module)
+        val javaModule = ClassLoader::class.java.module
+        val implAddExportsOrOpens = Module::class.java.getDeclaredMethod(
+            "implAddExportsOrOpens",
+            String::class.java,
+            Module::class.java,
+            Boolean::class.java,
+            Boolean::class.java
+        ).also {
+            it.setAccessibleUnsafe(true)
+        }
+
+        implAddExportsOrOpens.invoke(javaModule, "java.lang", InjectApi::class.java.module, true, true)
 
         // Cache hooks
         @OptIn(Internal::class)
