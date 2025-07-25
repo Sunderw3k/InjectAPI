@@ -6,6 +6,7 @@ import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.ClassNode
 import rip.sunrise.injectapi.debug.ClassDumper
 import rip.sunrise.injectapi.managers.HookManager
+import rip.sunrise.injectapi.utils.CustomClassWriter
 import java.lang.instrument.ClassFileTransformer
 import java.lang.instrument.Instrumentation
 import java.security.ProtectionDomain
@@ -48,7 +49,7 @@ internal object GlobalTransformer : ClassFileTransformer {
             FieldRedirectTransformer().transform(node)
             MethodRedirectTransformer().transform(node)
 
-            val bytes = ClassWriter(ClassWriter.COMPUTE_FRAMES).let {
+            val bytes = CustomClassWriter(ClassWriter.COMPUTE_FRAMES, loader).let {
                 node.accept(it)
                 it.toByteArray()
             }
