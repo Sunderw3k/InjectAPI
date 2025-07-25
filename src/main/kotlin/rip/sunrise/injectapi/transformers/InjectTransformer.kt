@@ -17,7 +17,7 @@ import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 
 class InjectTransformer {
-    fun transform(node: ClassNode) {
+    fun transform(node: ClassNode, supportsInvokedynamic: Boolean) {
         node.methods.forEach { method ->
             HookManager.getHooks()
                 .filterIsInstance<InjectHook>()
@@ -28,7 +28,7 @@ class InjectTransformer {
                     // NOTE: Keep the generateHookCode inlined, ASM doesn't like repeating labels.
                     when (hook.injectionMode) {
                         is HeadInjection -> {
-                            method.instructions.insert(generateHookCode(hook, method, node))
+                            method.instructions.insert(generateHookCode(hook, method, node, supportsInvokedynamic))
                         }
 
                         is ReturnInjection -> {
@@ -46,7 +46,10 @@ class InjectTransformer {
                                         Opcodes.DRETURN
                                     )
                                 }.forEach {
-                                    method.instructions.insertBefore(it, generateHookCode(hook, method, node))
+                                    method.instructions.insertBefore(
+                                        it,
+                                        generateHookCode(hook, method, node, supportsInvokedynamic)
+                                    )
                                 }
                         }
 
@@ -60,7 +63,10 @@ class InjectTransformer {
                                     val index = method.instructions.indexOf(it)
                                     val offset = method.instructions.get(index + hook.injectionMode.offset)
 
-                                    method.instructions.insert(offset, generateHookCode(hook, method, node))
+                                    method.instructions.insert(
+                                        offset,
+                                        generateHookCode(hook, method, node, supportsInvokedynamic)
+                                    )
                                 }
                         }
                     }
@@ -90,7 +96,12 @@ class InjectTransformer {
      * @see rip.sunrise.injectapi.global.ProxyDynamicFactory.bootstrap
      */
     @OptIn(InjectApi.Internal::class)
-    private fun generateHookCode(hook: InjectHook, method: MethodNode, clazz: ClassNode): InsnList {
+    private fun generateHookCode(
+        hook: InjectHook,
+        method: MethodNode,
+        clazz: ClassNode,
+        supportsInvokedynamic: Boolean
+    ): InsnList {
         val contextClass = "@CONTEXT@"
         val hookId = HookManager.getCachedHookId(hook)
 
@@ -115,6 +126,19 @@ class InjectTransformer {
             setHookRunning(hookId, true)
             // Actual bootstrap entry. Stack: [Hook Array]
 
+            if (!supportsInvokedynamic) {
+                add(LdcInsnNode(hookId))
+                add(
+                    MethodInsnNode(
+                        Opcodes.INVOKESTATIC,
+                        "@BOOTSTRAP@",
+                        "getHandle",
+                        "(I)Ljava/lang/invoke/MethodHandle;",
+                        false
+                    )
+                )
+            }
+
             // Initialize Context
             add(TypeInsnNode(Opcodes.NEW, contextClass))
             add(InsnNode(Opcodes.DUP))
@@ -128,30 +152,43 @@ class InjectTransformer {
                 add(VarInsnNode(it.opcode, it.index))
             }
 
-            // Hook InvokeDynamic
-            val hookHandle = Handle(
-                Opcodes.H_INVOKESTATIC,
-                "@BOOTSTRAP@",
-                "bootstrap",
-                MethodType.methodType(
-                    CallSite::class.java,
-                    MethodHandles.Lookup::class.java,
-                    String::class.java,
-                    MethodType::class.java,
-                    Int::class.java
-                ).toMethodDescriptorString(),
-                false
-            )
-
             val capturedDescriptor = getCapturedDescriptor(hook.arguments, method, clazz.name)
-            add(
-                InvokeDynamicInsnNode(
-                    "INJECT",
-                    "(Ljava/util/Map;$capturedDescriptor)Ljava/util/Map;",
-                    hookHandle,
-                    hookId
+
+            if (supportsInvokedynamic) {
+                // Hook InvokeDynamic
+                val hookHandle = Handle(
+                    Opcodes.H_INVOKESTATIC,
+                    "@BOOTSTRAP@",
+                    "bootstrap",
+                    MethodType.methodType(
+                        CallSite::class.java,
+                        MethodHandles.Lookup::class.java,
+                        String::class.java,
+                        MethodType::class.java,
+                        Int::class.java
+                    ).toMethodDescriptorString(),
+                    false
                 )
-            )
+
+                add(
+                    InvokeDynamicInsnNode(
+                        "INJECT",
+                        "(Ljava/util/Map;$capturedDescriptor)Ljava/util/Map;",
+                        hookHandle,
+                        hookId
+                    )
+                )
+            } else {
+                add(
+                    MethodInsnNode(
+                        Opcodes.INVOKEVIRTUAL,
+                        "java/lang/invoke/MethodHandle",
+                        "invoke",
+                        "(Ljava/util/Map;$capturedDescriptor)Ljava/util/Map;",
+                        false
+                    )
+                )
+            }
 
             // Deserialize
             add(

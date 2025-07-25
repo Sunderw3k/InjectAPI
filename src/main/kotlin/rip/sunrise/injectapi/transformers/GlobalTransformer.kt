@@ -44,10 +44,12 @@ internal object GlobalTransformer : ClassFileTransformer {
                 node
             }
 
+            val supportsInvokedynamic = node.version and 0xFF >= 51
+
             // Run transformers
-            InjectTransformer().transform(node)
-            FieldRedirectTransformer().transform(node)
-            MethodRedirectTransformer().transform(node)
+            InjectTransformer().transform(node, supportsInvokedynamic)
+            FieldRedirectTransformer().transform(node, supportsInvokedynamic)
+            MethodRedirectTransformer().transform(node, supportsInvokedynamic)
 
             val bytes = CustomClassWriter(ClassWriter.COMPUTE_FRAMES, loader).let {
                 node.accept(it)

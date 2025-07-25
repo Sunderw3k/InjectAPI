@@ -16,12 +16,16 @@ import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 
 class MethodRedirectTransformer {
-    fun transform(node: ClassNode) {
+    fun transform(node: ClassNode, supportsInvokedynamic: Boolean) {
         node.methods.forEach { method ->
             HookManager.getHooks().filterIsInstance<MethodRedirectHook>()
                 .filter { Type.getType(it.clazz).internalName == node.name }
                 .filter { it.method.name == method.name && it.method.desc == method.desc }
                 .forEach { hook ->
+                    if (!supportsInvokedynamic) {
+                        TODO("Implement java 6 for FieldRedirect")
+                    }
+
                     method.instructions
                         .filterIsInstance<MethodInsnNode>()
                         .filter { it.name == hook.targetMethod.name && it.desc == hook.targetMethod.desc }

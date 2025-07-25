@@ -20,10 +20,12 @@ public class ProxyDynamicFactory {
      * Called from hooks. This is the bridge between any ClassLoader and the InjectAPI ClassLoader.
      * Because this is only called once. It's okay to use reflection here.
      */
-    @SuppressWarnings("ReplaceOnLiteralHasNoEffect")
     public static CallSite bootstrap(MethodHandles.Lookup caller, String name, MethodType type, int hookId) {
-        System.out.println("Got invokedynamic call from " + caller + " for hookId " + hookId);
+        return new ConstantCallSite(getHandle(hookId).asType(type));
+    }
 
+    @SuppressWarnings("ReplaceOnLiteralHasNoEffect")
+    public static MethodHandle getHandle(int hookId) {
         try {
             Class<?> managerClass = classLoader.loadClass("@HOOK_MANAGER@".replace("/", "."));
             Class<?> hookClass = classLoader.loadClass("@HOOK@".replace("/", "."));
@@ -32,10 +34,7 @@ public class ProxyDynamicFactory {
 
             Object hook = managerClass.getDeclaredMethod("getCachedHook", int.class).invoke(instance, hookId);
 
-            MethodHandle handle = (MethodHandle) hookClass.getDeclaredMethod("getHandle").invoke(hook);
-
-            // TODO: Kinda forced, it won't fail. Only happens because types are lost when calling unreflect.
-            return new ConstantCallSite(handle.asType(type));
+            return (MethodHandle) hookClass.getDeclaredMethod("getHandle").invoke(hook);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
