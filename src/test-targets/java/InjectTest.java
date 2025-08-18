@@ -25,4 +25,7 @@ public class InjectTest {
 
     // Instance Capture
     public void testCaptureInstance() {}
+
+    // Rehooking
+    public static void rehookNormal() {}
 }

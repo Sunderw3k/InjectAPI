@@ -5,6 +5,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertDoesNotThrow
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import rip.sunrise.injectapi.global.Context
@@ -215,6 +216,71 @@ class InjectTest {
                 }
             )
         }
+    }
+
+    @Test
+    fun rehookNormal() {
+        val clazz = classLoader.loadClass(CLASS_NAME)
+        val method = clazz.declaredMethods.first { it.name == "rehookNormal"}
+
+        var count = 0
+
+        HookManager.addHook(InjectHook(
+            HeadInjection(),
+            classLoader.loadClass(CLASS_NAME),
+            TargetMethod(method.name, Type.getMethodDescriptor(method)),
+            listOf(),
+        ) { ctx: Context ->
+            count += 1
+        })
+
+        assertEquals(0, count)
+
+        assertDoesNotThrow {
+            InjectApi.transform(instrumentation)
+            method.invoke(null)
+        }
+        assertEquals(1, count)
+
+        assertDoesNotThrow {
+            InjectApi.transform(instrumentation)
+            method.invoke(null)
+        }
+        assertEquals(2, count)
+    }
+
+    @Test
+    @Suppress("KotlinConstantConditions")
+    fun rehookBootstrap() {
+        assertEquals(null, String::class.java.classLoader)
+
+        var count = 0
+        val whitelist = "InjectAPI Test String"
+
+        HookManager.addHook(InjectHook(
+            HeadInjection(),
+            String::class.java,
+            TargetMethod("equals", "(Ljava/lang/Object;)Z"),
+            listOf(CapturedArgument(Opcodes.ALOAD, 1)),
+        ) { ctx: Context, other: Any ->
+            if (other == whitelist) {
+                count += 1
+            }
+        })
+
+        assertEquals(0, count)
+
+        assertDoesNotThrow {
+            InjectApi.transform(instrumentation)
+            "" == whitelist
+        }
+        assertEquals(1, count)
+
+        assertDoesNotThrow {
+            InjectApi.transform(instrumentation)
+            "" == whitelist
+        }
+        assertEquals(2, count)
     }
 
     @AfterEach
