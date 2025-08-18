@@ -42,17 +42,13 @@ object InjectApi {
 
         HookManager.getTargetClasses().map { it.classLoader }.distinct().forEach {
             // In case the classes are defined already, we don't want to load them again.
-            if (runCatching { it.loadClass(Context::class.java.name) }.isFailure) {
+            if (runCatching { it.loadClassSafe(Context::class.java.name) }.isFailure) {
                 // Load Context and ProxyDynamicFactory in the hooked classloaders
                 defineClass(getClassBytes(Type.getInternalName(Context::class.java)), it, null)
                 defineClass(getClassBytes(Type.getInternalName(ProxyDynamicFactory::class.java)), it, null)
             }
 
-            val dynamicFactory = if (it == null) {
-                findBootstrapClassOrNull.invoke(null, ProxyDynamicFactory::class.java.name) as Class<*>
-            } else {
-                it.loadClass(ProxyDynamicFactory::class.java.name)
-            }
+            val dynamicFactory = it.loadClassSafe(ProxyDynamicFactory::class.java.name)
 
             // Set the InjectAPI ClassLoader
             dynamicFactory.getDeclaredField("classLoader").set(null, InjectApi::class.java.classLoader)
@@ -82,6 +78,13 @@ object InjectApi {
 
     private val findBootstrapClassOrNull = ClassLoader::class.java.getDeclaredMethod("findBootstrapClassOrNull", String::class.java).also {
         it.setAccessibleUnsafe(true)
+    }
+
+    /**
+     * Wrapper for loadClass which works with the bootstrap ClassLoader which is `null`
+     */
+    private fun ClassLoader?.loadClassSafe(name: String): Class<*> {
+        return this?.loadClass(name) ?: findBootstrapClassOrNull.invoke(null, name) as Class<*>
     }
 
     private fun getClassBytes(name: String): ByteArray {
