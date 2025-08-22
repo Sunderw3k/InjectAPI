@@ -14,8 +14,8 @@ fun Instrumentation.getRegisteredTransformers(): List<ClassFileTransformer> {
     }
 
     return (transformerListField.get(transformerManager) as Array<Any>).map {
-        it::class.java.getDeclaredMethod("transformer").also {
-            it.setAccessibleUnsafe(true)
+        it::class.java.getDeclaredMethod("transformer").also { m ->
+            m.setAccessibleUnsafe(true)
         }(it) as ClassFileTransformer
     }
 }

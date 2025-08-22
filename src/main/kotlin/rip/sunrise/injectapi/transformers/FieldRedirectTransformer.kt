@@ -1,19 +1,17 @@
 package rip.sunrise.injectapi.transformers
 
-import org.objectweb.asm.Handle
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.*
 import rip.sunrise.injectapi.InjectApi
 import rip.sunrise.injectapi.hooks.redirect.field.FieldRedirectHook
 import rip.sunrise.injectapi.managers.HookManager
+import rip.sunrise.injectapi.utils.extensions.getLoadBytecodes
+import rip.sunrise.injectapi.utils.getBootstrapHandle
 import rip.sunrise.injectapi.utils.getCapturedDescriptor
 import rip.sunrise.injectapi.utils.getLocalRunningHookArray
 import rip.sunrise.injectapi.utils.isHookRunning
 import rip.sunrise.injectapi.utils.setHookRunning
-import java.lang.invoke.CallSite
-import java.lang.invoke.MethodHandles
-import java.lang.invoke.MethodType
 
 class FieldRedirectTransformer {
     fun transform(node: ClassNode, supportsInvokedynamic: Boolean) {
@@ -81,24 +79,10 @@ class FieldRedirectTransformer {
             }
 
             // Load args
-            hook.arguments.forEach {
-                add(VarInsnNode(it.opcode, it.index))
-            }
+            add(hook.arguments.getLoadBytecodes())
 
             // Hook InvokeDynamic
-            val hookHandle = Handle(
-                Opcodes.H_INVOKESTATIC,
-                "@BOOTSTRAP@",
-                "bootstrap",
-                MethodType.methodType(
-                    CallSite::class.java,
-                    MethodHandles.Lookup::class.java,
-                    String::class.java,
-                    MethodType::class.java,
-                    Int::class.java
-                ).toMethodDescriptorString(),
-                false
-            )
+            val hookHandle = getBootstrapHandle()
 
             val fieldType = field.desc
             val capturedDescriptor = getCapturedDescriptor(hook.arguments, method, clazz.name)

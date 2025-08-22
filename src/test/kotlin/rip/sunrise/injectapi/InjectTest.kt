@@ -99,7 +99,7 @@ class InjectTest {
                     clazz,
                     TargetMethod(method.name, Type.getMethodDescriptor(method)),
                     listOf(CapturedArgument(Opcodes.ILOAD, 0)),
-                ) { ctx: Context, a: Int ->
+                ) { _: Context, a: Int ->
                     assertEquals(42, a)
                 }
             )
@@ -115,7 +115,7 @@ class InjectTest {
                     clazz,
                     TargetMethod(method.name, Type.getMethodDescriptor(method)),
                     listOf(CapturedArgument(Opcodes.LLOAD, 0)),
-                ) { ctx: Context, a: Long ->
+                ) { _: Context, a: Long ->
                     assertEquals(42L, a)
                 }
             )
@@ -131,7 +131,7 @@ class InjectTest {
                     clazz,
                     TargetMethod(method.name, Type.getMethodDescriptor(method)),
                     listOf(CapturedArgument(Opcodes.ALOAD, 0)),
-                ) { ctx: Context, a: Any ->
+                ) { _: Context, a: Any ->
                     assertEquals(System.out, a)
                 }
             )
@@ -147,7 +147,7 @@ class InjectTest {
                     clazz,
                     TargetMethod(method.name, Type.getMethodDescriptor(method)),
                     listOf(CapturedArgument(Opcodes.ILOAD, 1)),
-                ) { ctx: Context, a: Int ->
+                ) { _: Context, a: Int ->
                     assertEquals(69, a)
                 }
             )
@@ -163,7 +163,7 @@ class InjectTest {
                     clazz,
                     TargetMethod(method.name, Type.getMethodDescriptor(method)),
                     listOf(CapturedArgument(Opcodes.ILOAD, 2)),
-                ) { ctx: Context, a: Int ->
+                ) { _: Context, a: Int ->
                     assertEquals(69, a)
                 }
             )
@@ -179,7 +179,7 @@ class InjectTest {
                     clazz,
                     TargetMethod(method.name, Type.getMethodDescriptor(method)),
                     listOf(CapturedArgument(Opcodes.LLOAD, 1)),
-                ) { ctx: Context, a: Long ->
+                ) { _: Context, a: Long ->
                     assertEquals(69L, a)
                 }
             )
@@ -195,7 +195,7 @@ class InjectTest {
                     clazz,
                     TargetMethod(method.name, Type.getMethodDescriptor(method)),
                     listOf(CapturedArgument(Opcodes.LLOAD, 2)),
-                ) { ctx: Context, a: Long ->
+                ) { _: Context, a: Long ->
                     assertEquals(69L, a)
                 }
             )
@@ -211,7 +211,7 @@ class InjectTest {
                     clazz,
                     TargetMethod(method.name, Type.getMethodDescriptor(method)),
                     listOf(CapturedArgument(Opcodes.ALOAD, 0)),
-                ) { ctx: Context, instance: Any ->
+                ) { _: Context, instance: Any ->
                     assertInstanceOf(clazz, instance)
                 }
             )
@@ -230,7 +230,7 @@ class InjectTest {
             classLoader.loadClass(CLASS_NAME),
             TargetMethod(method.name, Type.getMethodDescriptor(method)),
             listOf(),
-        ) { ctx: Context ->
+        ) { _: Context ->
             count += 1
         })
 
@@ -262,7 +262,7 @@ class InjectTest {
             String::class.java,
             TargetMethod("equals", "(Ljava/lang/Object;)Z"),
             listOf(CapturedArgument(Opcodes.ALOAD, 1)),
-        ) { ctx: Context, other: Any ->
+        ) { _: Context, other: Any ->
             if (other == whitelist) {
                 count += 1
             }

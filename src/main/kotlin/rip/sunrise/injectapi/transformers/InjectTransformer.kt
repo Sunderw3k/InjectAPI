@@ -1,6 +1,5 @@
 package rip.sunrise.injectapi.transformers
 
-import org.objectweb.asm.Handle
 import org.objectweb.asm.Label
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
@@ -12,9 +11,7 @@ import rip.sunrise.injectapi.hooks.inject.modes.InvokeInjection
 import rip.sunrise.injectapi.hooks.inject.modes.ReturnInjection
 import rip.sunrise.injectapi.managers.HookManager
 import rip.sunrise.injectapi.utils.*
-import java.lang.invoke.CallSite
-import java.lang.invoke.MethodHandles
-import java.lang.invoke.MethodType
+import rip.sunrise.injectapi.utils.extensions.getLoadBytecodes
 
 class InjectTransformer {
     fun transform(node: ClassNode, supportsInvokedynamic: Boolean) {
@@ -148,27 +145,13 @@ class InjectTransformer {
             add(MethodInsnNode(Opcodes.INVOKEVIRTUAL, contextClass, "serialize", "()Ljava/util/Map;", false))
 
             // Load args
-            hook.arguments.forEach {
-                add(VarInsnNode(it.opcode, it.index))
-            }
+            add(hook.arguments.getLoadBytecodes())
 
             val capturedDescriptor = getCapturedDescriptor(hook.arguments, method, clazz.name)
 
             if (supportsInvokedynamic) {
                 // Hook InvokeDynamic
-                val hookHandle = Handle(
-                    Opcodes.H_INVOKESTATIC,
-                    "@BOOTSTRAP@",
-                    "bootstrap",
-                    MethodType.methodType(
-                        CallSite::class.java,
-                        MethodHandles.Lookup::class.java,
-                        String::class.java,
-                        MethodType::class.java,
-                        Int::class.java
-                    ).toMethodDescriptorString(),
-                    false
-                )
+                val hookHandle = getBootstrapHandle()
 
                 add(
                     InvokeDynamicInsnNode(
