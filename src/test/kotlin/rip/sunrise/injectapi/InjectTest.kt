@@ -237,13 +237,13 @@ class InjectTest {
         assertEquals(0, count)
 
         assertDoesNotThrow {
-            InjectApi.transform(instrumentation)
+            InjectApi.transform(backend)
             method.invoke(null)
         }
         assertEquals(1, count)
 
         assertDoesNotThrow {
-            InjectApi.transform(instrumentation)
+            InjectApi.transform(backend)
             method.invoke(null)
         }
         assertEquals(2, count)
@@ -271,13 +271,13 @@ class InjectTest {
         assertEquals(0, count)
 
         assertDoesNotThrow {
-            InjectApi.transform(instrumentation)
+            InjectApi.transform(backend)
             "" == whitelist
         }
         assertEquals(1, count)
 
         assertDoesNotThrow {
-            InjectApi.transform(instrumentation)
+            InjectApi.transform(backend)
             "" == whitelist
         }
         assertEquals(2, count)
@@ -296,13 +296,13 @@ class InjectTest {
         @BeforeAll
         @JvmStatic
         fun registerTransformers() {
-            instrumentation.addTransformer(GlobalTransformer, true)
+            backend.addTransformer(GlobalTransformer)
         }
 
         @AfterAll
         @JvmStatic
         fun unregisterTransformers() {
-            instrumentation.removeTransformer(GlobalTransformer)
+            backend.removeTransformer(GlobalTransformer)
         }
     }
 }

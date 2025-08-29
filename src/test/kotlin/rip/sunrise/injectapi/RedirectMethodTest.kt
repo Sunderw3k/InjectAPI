@@ -6,13 +6,11 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
-import rip.sunrise.injectapi.debug.FileSystemDumper
 import rip.sunrise.injectapi.hooks.CapturedArgument
 import rip.sunrise.injectapi.hooks.TargetMethod
 import rip.sunrise.injectapi.hooks.redirect.method.MethodRedirectHook
 import rip.sunrise.injectapi.managers.HookManager
 import rip.sunrise.injectapi.transformers.GlobalTransformer
-import kotlin.io.path.Path
 import kotlin.test.assertEquals
 
 private const val CLASS_NAME = "RedirectMethodTest"
@@ -105,14 +103,13 @@ class RedirectMethodTest {
         @BeforeAll
         @JvmStatic
         fun registerTransformers() {
-            GlobalTransformer.dumper = FileSystemDumper(Path("/home/sun3k/dump"))
-            instrumentation.addTransformer(GlobalTransformer, true)
+            backend.addTransformer(GlobalTransformer)
         }
 
         @AfterAll
         @JvmStatic
         fun unregisterTransformers() {
-            instrumentation.removeTransformer(GlobalTransformer)
+            backend.removeTransformer(GlobalTransformer)
         }
     }
 }

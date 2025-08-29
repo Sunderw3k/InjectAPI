@@ -1,6 +1,7 @@
 package rip.sunrise.injectapi
 
 import net.bytebuddy.agent.ByteBuddyAgent
+import rip.sunrise.injectapi.backends.InstrumentationBackend
 import rip.sunrise.injectapi.hooks.Hook
 import rip.sunrise.injectapi.managers.HookManager
 import java.io.File
@@ -10,6 +11,7 @@ import java.lang.reflect.Modifier
 import java.net.URLClassLoader
 
 val instrumentation: Instrumentation = ByteBuddyAgent.install()
+val backend = InstrumentationBackend(instrumentation)
 val classLoader: URLClassLoader = URLClassLoader.newInstance(
     arrayOf(File("build/libs/test-targets.jar").toURI().toURL())
 )
@@ -27,7 +29,7 @@ fun testHookedMethodInvocation(
     hooks.forEach {
         HookManager.addHook(it)
     }
-    InjectApi.transform(instrumentation)
+    InjectApi.transform(backend)
 
     // TODO: assertDoesNotThrow is cleaner, but this unwraps the message
     val result = runCatching {

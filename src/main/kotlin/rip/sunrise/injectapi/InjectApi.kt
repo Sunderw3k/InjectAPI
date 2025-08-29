@@ -1,14 +1,13 @@
 package rip.sunrise.injectapi
 
 import org.objectweb.asm.Type
+import rip.sunrise.injectapi.backends.TransformationBackend
 import rip.sunrise.injectapi.global.Context
 import rip.sunrise.injectapi.global.ProxyDynamicFactory
 import rip.sunrise.injectapi.managers.HookManager
 import rip.sunrise.injectapi.transformers.GlobalTransformer
 import rip.sunrise.injectapi.utils.defineClass
-import rip.sunrise.injectapi.utils.extensions.getRegisteredTransformers
 import rip.sunrise.injectapi.utils.setAccessibleUnsafe
-import java.lang.instrument.Instrumentation
 
 /**
  * The main class containing all the initialization logic.
@@ -22,7 +21,7 @@ object InjectApi {
      *
      * IMPORTANT: Call from the same ClassLoader which loaded HookManager, or any CL that resolves both of classes to the same one.
      */
-    fun transform(inst: Instrumentation) {
+    fun transform(transformationBackend: TransformationBackend) {
         val javaModule = ClassLoader::class.java.module
         val implAddExportsOrOpens = Module::class.java.getDeclaredMethod(
             "implAddExportsOrOpens",
@@ -66,14 +65,13 @@ object InjectApi {
 
         // Make sure our transformer is last
         // NOTE: A javaagent registering doesn't make a difference, unless it gets registered twice or more.
-        inst.removeTransformer(GlobalTransformer)
-        inst.addTransformer(GlobalTransformer, true)
+        transformationBackend.removeTransformer(GlobalTransformer)
+        transformationBackend.addTransformer(GlobalTransformer)
 
-        val transformers = inst.getRegisteredTransformers()
-        assert(transformers.indexOf(GlobalTransformer) == transformers.size - 1)
+        assert(transformationBackend.indexOf(GlobalTransformer) == transformationBackend.transformerCount() - 1)
 
         // Retransform
-        inst.retransformClasses(*HookManager.getTargetClasses().toTypedArray())
+        transformationBackend.retransform(*HookManager.getTargetClasses().toTypedArray())
     }
 
     private val findBootstrapClassOrNull = ClassLoader::class.java.getDeclaredMethod("findBootstrapClassOrNull", String::class.java).also {

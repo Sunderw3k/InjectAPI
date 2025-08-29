@@ -302,13 +302,13 @@ class RedirectFieldTest {
         @BeforeAll
         @JvmStatic
         fun registerTransformers() {
-            instrumentation.addTransformer(GlobalTransformer, true)
+            backend.addTransformer(GlobalTransformer)
         }
 
         @AfterAll
         @JvmStatic
         fun unregisterTransformers() {
-            instrumentation.removeTransformer(GlobalTransformer)
+            backend.removeTransformer(GlobalTransformer)
         }
     }
 }

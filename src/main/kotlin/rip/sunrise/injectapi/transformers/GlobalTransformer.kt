@@ -4,12 +4,11 @@ import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.ClassNode
+import rip.sunrise.injectapi.backends.Transformer
 import rip.sunrise.injectapi.debug.ClassDumper
 import rip.sunrise.injectapi.managers.HookManager
 import rip.sunrise.injectapi.utils.CustomClassWriter
-import java.lang.instrument.ClassFileTransformer
-import java.lang.instrument.Instrumentation
-import java.security.ProtectionDomain
+import rip.sunrise.injectapi.backends.TransformationBackend
 
 /**
  * The main transformer which adds hooks into classes.
@@ -17,9 +16,9 @@ import java.security.ProtectionDomain
  * NOTE: Excepted to run last, otherwise it might break during a retransform,
  * where a transformer registered after us left.
  * @see HookManager.getTargetClasses
- * @see Instrumentation.retransformClasses
+ * @see TransformationBackend.retransform
  */
-internal object GlobalTransformer : ClassFileTransformer {
+internal object GlobalTransformer : Transformer {
     private val transformedClasses = mutableMapOf<String, ByteArray>()
 
     var dumper: ClassDumper? = null
@@ -27,14 +26,12 @@ internal object GlobalTransformer : ClassFileTransformer {
     override fun transform(
         loader: ClassLoader?,
         className: String,
-        classBeingRedefined: Class<*>?,
-        protectionDomain: ProtectionDomain?,
         classfileBuffer: ByteArray
     ): ByteArray? {
         // TODO: https://stackoverflow.com/questions/78421704/java-classfiletransformer-fails-to-throw-exception
         return runCatching {
             // Check whether any hook applies to this class
-            if (HookManager.getHooks().none { it.clazz.name.replace(".", "/") == className }) return classfileBuffer
+            if (HookManager.getHooks().none { it.clazz.name.replace(".", "/") == className }) return null
 
             // Load cached bytes, so that all previous hooks are removed
             val classBytes = transformedClasses.getOrPut(className) { classfileBuffer }
