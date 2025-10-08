@@ -1,10 +1,10 @@
 package rip.sunrise.injectapi.managers
 
-import com.google.common.collect.ImmutableList
 import rip.sunrise.injectapi.InjectApi
 import rip.sunrise.injectapi.hooks.Hook
 import rip.sunrise.injectapi.managers.HookManager.cachedHooks
 import rip.sunrise.injectapi.managers.HookManager.hooks
+import java.util.Collections
 
 object HookManager {
     /**
@@ -33,8 +33,8 @@ object HookManager {
     /**
      * Returns an immutable list of [hooks].
      */
-    fun getHooks(): ImmutableList<Hook> {
-        return ImmutableList.copyOf(hooks)
+    fun getHooks(): List<Hook> {
+        return Collections.unmodifiableList(hooks)
     }
 
     /**

@@ -291,7 +291,7 @@ class RedirectFieldTest {
         wideStaticField.set(null, 1L)
         assertEquals(1L, wideStaticField.get(null))
 
-        HookManager.getHooks().forEach {
+        HookManager.getHooks().toList().forEach {
             @OptIn(InjectApi.Internal::class)
             HookManager.removeHook(it)
         }

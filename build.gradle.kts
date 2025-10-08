@@ -30,8 +30,6 @@ dependencies {
     implementation("org.ow2.asm:asm-commons:$asmVersion")
     implementation("org.ow2.asm:asm-tree:$asmVersion")
 
-    implementation("com.google.guava:guava:33.2.1-jre")
-
     testImplementation("net.bytebuddy:byte-buddy-agent:1.17.2")
     testImplementation(kotlin("test"))
 }

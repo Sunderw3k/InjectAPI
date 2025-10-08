@@ -285,7 +285,7 @@ class InjectTest {
 
     @AfterEach
     fun clearHooks() {
-        HookManager.getHooks().forEach {
+        HookManager.getHooks().toList().forEach {
             @OptIn(InjectApi.Internal::class)
             HookManager.removeHook(it)
         }
