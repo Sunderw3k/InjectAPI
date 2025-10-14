@@ -64,16 +64,13 @@ class MethodRedirectTransformer {
 
             add(ifNotRunningLabel)
 
-            add(InsnNode(Opcodes.DUP))
+            // NOTE: Unfortunately, sometimes there is no way for the `[Z` to be at the bottom later, as deep swaps are impossible with just the VM opcodes.
+            // Stack: [this, arguments, Hook Array]
+
             setHookRunning(hookId, true)
 
-            // Pop `this` which is before a virtual call
-            if (targetMethod.opcode == Opcodes.INVOKEVIRTUAL) {
-                add(InsnNode(Opcodes.SWAP))
-                add(InsnNode(Opcodes.POP))
-            }
-
             // Load args
+            // Stack: [this, arguments]
             add(hook.arguments.getLoadBytecodes())
 
             // Hook InvokeDynamic
@@ -87,20 +84,28 @@ class MethodRedirectTransformer {
             add(
                 InvokeDynamicInsnNode(
                     "REDIRECT_METHOD",
-                    "($methodArgDescriptor$capturedDescriptor)${methodType.returnType.descriptor}",
+                    "($methodArgDescriptor$capturedDescriptor)${returnDesc.descriptor}",
                     hookHandle,
                     hookId
                 )
             )
 
-            if (returnDesc == Type.LONG_TYPE || returnDesc == Type.DOUBLE_TYPE) {
-                add(InsnNode(Opcodes.DUP2_X1))
-                add(InsnNode(Opcodes.POP2))
-            } else {
-                add(InsnNode(Opcodes.SWAP))
+            if (targetMethod.opcode == Opcodes.INVOKEVIRTUAL) {
+                // Swap return value with `this`
+                if (returnDesc == Type.LONG_TYPE || returnDesc == Type.DOUBLE_TYPE) {
+                    add(InsnNode(Opcodes.DUP2_X1))
+                    add(InsnNode(Opcodes.POP2))
+                } else {
+                    add(InsnNode(Opcodes.SWAP))
+                }
+
+                // Pop `this`
+                add(InsnNode(Opcodes.POP))
             }
 
+            getLocalRunningHookArray()
             setHookRunning(hookId, false)
+
             add(endLabel)
         }
     }
