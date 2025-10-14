@@ -21,7 +21,7 @@ class MethodRedirectTransformer {
                 .filter { it.method.name == method.name && it.method.desc == method.desc }
                 .forEach { hook ->
                     if (!supportsInvokedynamic) {
-                        TODO("Implement java 6 for FieldRedirect")
+                        TODO("Implement java 6 for MethodRedirect")
                     }
 
                     method.instructions
