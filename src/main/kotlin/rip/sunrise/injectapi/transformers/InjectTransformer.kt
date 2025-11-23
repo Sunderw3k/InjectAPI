@@ -145,7 +145,8 @@ class InjectTransformer {
             add(MethodInsnNode(Opcodes.INVOKEVIRTUAL, contextClass, "serialize", "()Ljava/util/Map;", false))
 
             // Load args
-            add(hook.arguments.getLoadBytecodes())
+            val resolved = resolveOpcodes(hook.arguments, method)
+            add(resolved.getLoadBytecodes())
 
             val capturedDescriptor = getCapturedDescriptor(hook.arguments, method, clazz.name)
 

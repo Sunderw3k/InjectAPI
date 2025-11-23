@@ -6,12 +6,8 @@ import org.objectweb.asm.tree.*
 import rip.sunrise.injectapi.InjectApi
 import rip.sunrise.injectapi.hooks.redirect.method.MethodRedirectHook
 import rip.sunrise.injectapi.managers.HookManager
+import rip.sunrise.injectapi.utils.*
 import rip.sunrise.injectapi.utils.extensions.getLoadBytecodes
-import rip.sunrise.injectapi.utils.getBootstrapHandle
-import rip.sunrise.injectapi.utils.getCapturedDescriptor
-import rip.sunrise.injectapi.utils.getLocalRunningHookArray
-import rip.sunrise.injectapi.utils.isHookRunning
-import rip.sunrise.injectapi.utils.setHookRunning
 
 class MethodRedirectTransformer {
     fun transform(node: ClassNode, supportsInvokedynamic: Boolean) {
@@ -71,7 +67,8 @@ class MethodRedirectTransformer {
 
             // Load args
             // Stack: [this, arguments]
-            add(hook.arguments.getLoadBytecodes())
+            val resolved = resolveOpcodes(hook.arguments, method)
+            add(resolved.getLoadBytecodes())
 
             // Hook InvokeDynamic
             val hookHandle = getBootstrapHandle()
