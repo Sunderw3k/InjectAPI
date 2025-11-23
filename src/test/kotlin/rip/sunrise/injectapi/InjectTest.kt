@@ -375,7 +375,7 @@ class InjectTest {
             String::class.java,
             TargetMethod("equals", "(Ljava/lang/Object;)Z"),
             listOf(CapturedArgument(Opcodes.ALOAD, 1)),
-        ) { _: Context, other: Any ->
+        ) { _: Context, other: Any? ->
             if (other == whitelist) {
                 count += 1
             }
