@@ -13,6 +13,7 @@ import rip.sunrise.injectapi.hooks.CapturedArgument
 import rip.sunrise.injectapi.hooks.TargetMethod
 import rip.sunrise.injectapi.hooks.inject.InjectHook
 import rip.sunrise.injectapi.hooks.inject.modes.HeadInjection
+import rip.sunrise.injectapi.hooks.inject.modes.ReturnInjection
 import rip.sunrise.injectapi.managers.HookManager
 import rip.sunrise.injectapi.transformers.GlobalTransformer
 import kotlin.test.assertEquals
@@ -107,6 +108,22 @@ class InjectTest {
     }
 
     @Test
+    fun testCaptureThinArgumentAutodetect() {
+        testHookedMethodInvocation(CLASS_NAME, "testCaptureThinArgument", 42) { clazz, method ->
+            arrayOf(
+                InjectHook(
+                    HeadInjection(),
+                    clazz,
+                    TargetMethod(method.name, Type.getMethodDescriptor(method)),
+                    listOf(CapturedArgument(index = 0)),
+                ) { _: Context, a: Int ->
+                    assertEquals(42, a)
+                }
+            )
+        }
+    }
+
+    @Test
     fun testCaptureWideArgument() {
         testHookedMethodInvocation(CLASS_NAME, "testCaptureWideArgument", 42L) { clazz, method ->
             arrayOf(
@@ -123,6 +140,22 @@ class InjectTest {
     }
 
     @Test
+    fun testCaptureWideArgumentAutodetect() {
+        testHookedMethodInvocation(CLASS_NAME, "testCaptureWideArgument", 42) { clazz, method ->
+            arrayOf(
+                InjectHook(
+                    HeadInjection(),
+                    clazz,
+                    TargetMethod(method.name, Type.getMethodDescriptor(method)),
+                    listOf(CapturedArgument(index = 0)),
+                ) { _: Context, a: Long ->
+                    assertEquals(42L, a)
+                }
+            )
+        }
+    }
+
+    @Test
     fun testCaptureObjectArgument() {
         testHookedMethodInvocation(CLASS_NAME, "testCaptureObjectArgument", System.out) { clazz, method ->
             arrayOf(
@@ -131,6 +164,22 @@ class InjectTest {
                     clazz,
                     TargetMethod(method.name, Type.getMethodDescriptor(method)),
                     listOf(CapturedArgument(Opcodes.ALOAD, 0)),
+                ) { _: Context, a: Any ->
+                    assertEquals(System.out, a)
+                }
+            )
+        }
+    }
+
+    @Test
+    fun testCaptureObjectArgumentAutodetect() {
+        testHookedMethodInvocation(CLASS_NAME, "testCaptureObjectArgument", System.out) { clazz, method ->
+            arrayOf(
+                InjectHook(
+                    HeadInjection(),
+                    clazz,
+                    TargetMethod(method.name, Type.getMethodDescriptor(method)),
+                    listOf(CapturedArgument(index = 0)),
                 ) { _: Context, a: Any ->
                     assertEquals(System.out, a)
                 }
@@ -171,6 +220,22 @@ class InjectTest {
     }
 
     @Test
+    fun testCaptureThinArgumentAfterWideAutodetect() {
+        testHookedMethodInvocation(CLASS_NAME, "testCaptureThinArgumentAfterWide", 42L, 69) { clazz, method ->
+            arrayOf(
+                InjectHook(
+                    HeadInjection(),
+                    clazz,
+                    TargetMethod(method.name, Type.getMethodDescriptor(method)),
+                    listOf(CapturedArgument(index = 2)),
+                ) { _: Context, a: Int ->
+                    assertEquals(69, a)
+                }
+            )
+        }
+    }
+
+    @Test
     fun testCaptureWideArgumentAfterThin() {
         testHookedMethodInvocation(CLASS_NAME, "testCaptureWideArgumentAfterThin", 42, 69L) { clazz, method ->
             arrayOf(
@@ -179,6 +244,22 @@ class InjectTest {
                     clazz,
                     TargetMethod(method.name, Type.getMethodDescriptor(method)),
                     listOf(CapturedArgument(Opcodes.LLOAD, 1)),
+                ) { _: Context, a: Long ->
+                    assertEquals(69L, a)
+                }
+            )
+        }
+    }
+
+    @Test
+    fun testCaptureWideArgumentAfterThinAutodetect() {
+        testHookedMethodInvocation(CLASS_NAME, "testCaptureWideArgumentAfterThin", 42, 69L) { clazz, method ->
+            arrayOf(
+                InjectHook(
+                    HeadInjection(),
+                    clazz,
+                    TargetMethod(method.name, Type.getMethodDescriptor(method)),
+                    listOf(CapturedArgument(index = 1)),
                 ) { _: Context, a: Long ->
                     assertEquals(69L, a)
                 }
@@ -203,6 +284,22 @@ class InjectTest {
     }
 
     @Test
+    fun testCaptureThinLocal() {
+        testHookedMethodInvocation(CLASS_NAME, "testCaptureThinLocal") { clazz, method ->
+            arrayOf(
+                InjectHook(
+                    ReturnInjection(),
+                    clazz,
+                    TargetMethod(method.name, Type.getMethodDescriptor(method)),
+                    listOf(CapturedArgument(Opcodes.ILOAD, 0)),
+                ) { _: Context, local: Int ->
+                    assertEquals(local, 42)
+                }
+            )
+        }
+    }
+
+    @Test
     fun testCaptureInstance() {
         testHookedMethodInvocation(CLASS_NAME, "testCaptureInstance") { clazz, method ->
             arrayOf(
@@ -219,9 +316,25 @@ class InjectTest {
     }
 
     @Test
+    fun testCaptureInstanceAutodetect() {
+        testHookedMethodInvocation(CLASS_NAME, "testCaptureInstance") { clazz, method ->
+            arrayOf(
+                InjectHook(
+                    HeadInjection(),
+                    clazz,
+                    TargetMethod(method.name, Type.getMethodDescriptor(method)),
+                    listOf(CapturedArgument(index = 0)),
+                ) { _: Context, instance: Any ->
+                    assertInstanceOf(clazz, instance)
+                }
+            )
+        }
+    }
+
+    @Test
     fun rehookNormal() {
         val clazz = classLoader.loadClass(CLASS_NAME)
-        val method = clazz.declaredMethods.first { it.name == "rehookNormal"}
+        val method = clazz.declaredMethods.first { it.name == "rehookNormal" }
 
         var count = 0
 

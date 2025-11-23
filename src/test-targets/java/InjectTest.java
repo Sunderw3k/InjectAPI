@@ -23,6 +23,11 @@ public class InjectTest {
     public static void testCaptureWideArgumentAfterThin(int a, long b) {}
     public static void testCaptureWideArgumentAfterWide(long a, long b) {}
 
+    // Local Capture
+    public static void testCaptureThinLocal() {
+        int a = 42; // emits ISTORE 0
+    }
+
     // Instance Capture
     public void testCaptureInstance() {}
 
