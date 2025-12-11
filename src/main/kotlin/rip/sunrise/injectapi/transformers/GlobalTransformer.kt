@@ -25,11 +25,13 @@ internal object GlobalTransformer : Transformer {
 
     override fun transform(
         loader: ClassLoader?,
-        className: String,
+        className: String?,
         classfileBuffer: ByteArray
     ): ByteArray? {
         // TODO: https://stackoverflow.com/questions/78421704/java-classfiletransformer-fails-to-throw-exception
         return runCatching {
+            if (className == null) return null
+
             // Check whether any hook applies to this class
             if (HookManager.getHooks().none { it.clazz.name.replace(".", "/") == className }) return null
 
