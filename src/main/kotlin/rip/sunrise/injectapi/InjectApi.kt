@@ -86,8 +86,9 @@ object InjectApi {
     }
 
     private fun getClassBytes(name: String): ByteArray {
-        return InjectApi::class.java.classLoader.getResourceAsStream("$name.class")?.readAllBytes()
-            ?: error("Couldn't find bytes for $name")
+        return InjectApi::class.java.classLoader.getResourceAsStream("$name.class")?.use {
+            it.readAllBytes()
+        } ?: error("Couldn't find bytes for $name")
     }
 
     /**
