@@ -42,6 +42,14 @@ class MethodRedirectTransformer {
     ): InsnList {
         val hookId = HookManager.getCachedHookId(hook)
 
+        val exStartLabel = LabelNode()
+        val exEndLabel = LabelNode()
+        val exHandlerLabel = LabelNode()
+        val tryCatchBlock = TryCatchBlockNode(exStartLabel, exEndLabel, exHandlerLabel, null)
+
+        // Insert at the front so that real exception handlers don't catch it instead of us
+        method.tryCatchBlocks.add(0, tryCatchBlock)
+
         return InsnList().apply {
             val endLabel = LabelNode()
 
@@ -78,6 +86,7 @@ class MethodRedirectTransformer {
             val capturedDescriptor = getCapturedDescriptor(hook.arguments, method, clazz.name)
             val returnDesc = methodType.returnType
 
+            add(exStartLabel)
             add(
                 InvokeDynamicInsnNode(
                     "REDIRECT_METHOD",
@@ -86,6 +95,7 @@ class MethodRedirectTransformer {
                     hookId
                 )
             )
+            add(exEndLabel)
 
             if (targetMethod.opcode == Opcodes.INVOKEVIRTUAL) {
                 // Swap return value with `this`
@@ -102,6 +112,16 @@ class MethodRedirectTransformer {
 
             getLocalRunningHookArray()
             setHookRunning(hookId, false)
+            add(JumpInsnNode(Opcodes.GOTO, endLabel))
+
+            // Exception Handler code, it only catches user code.
+            // Rethrows the exception after clearing the running flag
+            // Stack: [Exception]
+
+            add(exHandlerLabel)
+            getLocalRunningHookArray()
+            setHookRunning(hookId, false)
+            add(InsnNode(Opcodes.ATHROW))
 
             add(endLabel)
         }

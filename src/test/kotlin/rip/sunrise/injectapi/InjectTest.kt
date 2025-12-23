@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
+import org.junit.jupiter.api.assertThrows
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import rip.sunrise.injectapi.global.Context
@@ -338,14 +339,15 @@ class InjectTest {
 
         var count = 0
 
-        HookManager.addHook(InjectHook(
-            HeadInjection(),
-            classLoader.loadClass(CLASS_NAME),
-            TargetMethod(method.name, Type.getMethodDescriptor(method)),
-            listOf(),
-        ) { _: Context ->
-            count += 1
-        })
+        HookManager.addHook(
+            InjectHook(
+                HeadInjection(),
+                classLoader.loadClass(CLASS_NAME),
+                TargetMethod(method.name, Type.getMethodDescriptor(method)),
+                listOf(),
+            ) { _: Context ->
+                count += 1
+            })
 
         assertEquals(0, count)
 
@@ -370,16 +372,17 @@ class InjectTest {
         var count = 0
         val whitelist = "InjectAPI Test String"
 
-        HookManager.addHook(InjectHook(
-            HeadInjection(),
-            String::class.java,
-            TargetMethod("equals", "(Ljava/lang/Object;)Z"),
-            listOf(CapturedArgument(Opcodes.ALOAD, 1)),
-        ) { _: Context, other: Any? ->
-            if (other == whitelist) {
-                count += 1
-            }
-        })
+        HookManager.addHook(
+            InjectHook(
+                HeadInjection(),
+                String::class.java,
+                TargetMethod("equals", "(Ljava/lang/Object;)Z"),
+                listOf(CapturedArgument(Opcodes.ALOAD, 1)),
+            ) { _: Context, other: Any? ->
+                if (other == whitelist) {
+                    count += 1
+                }
+            })
 
         assertEquals(0, count)
 
@@ -394,6 +397,32 @@ class InjectTest {
             "" == whitelist
         }
         assertEquals(2, count)
+    }
+
+    @Test
+    fun throwInsideHook() {
+        val clazz = classLoader.loadClass(CLASS_NAME)
+        val method = clazz.declaredMethods.first { it.name == "throwInsideHook" }
+
+        assertDoesNotThrow {
+            method.invoke(null)
+        }
+
+        HookManager.addHook(InjectHook(
+            HeadInjection(),
+            clazz,
+            TargetMethod("throwInsideHook", "()V"),
+            emptyList(),
+        ) { _: Context ->
+            throw RuntimeException("Expected exception")
+        })
+
+        assertDoesNotThrow {
+            InjectApi.transform(backend)
+        }
+
+        assertThrows<Throwable>("First invocation") { method.invoke(null) }
+        assertThrows<Throwable>("Second invocation") { method.invoke(null) }
     }
 
     @AfterEach

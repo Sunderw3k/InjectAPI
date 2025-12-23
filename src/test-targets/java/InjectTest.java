@@ -33,4 +33,7 @@ public class InjectTest {
 
     // Rehooking
     public static void rehookNormal() {}
+
+    // Other
+    public static void throwInsideHook() {}
 }

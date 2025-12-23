@@ -48,6 +48,14 @@ class FieldRedirectTransformer {
     private fun generateHookCode(hook: FieldRedirectHook, field: FieldInsnNode, method: MethodNode, clazz: ClassNode): InsnList {
         val hookId = HookManager.getCachedHookId(hook)
 
+        val exStartLabel = LabelNode()
+        val exEndLabel = LabelNode()
+        val exHandlerLabel = LabelNode()
+        val tryCatchBlock = TryCatchBlockNode(exStartLabel, exEndLabel, exHandlerLabel, null)
+
+        // Insert at the front so that real exception handlers don't catch it instead of us
+        method.tryCatchBlocks.add(0, tryCatchBlock)
+
         return InsnList().apply {
             val endLabel = LabelNode()
 
@@ -83,12 +91,14 @@ class FieldRedirectTransformer {
 
             val fieldType = field.desc
             val capturedDescriptor = getCapturedDescriptor(hook.arguments, method, clazz.name)
+            add(exStartLabel)
             add(InvokeDynamicInsnNode(
                 "REDIRECT_FIELD",
                 "($fieldType$capturedDescriptor)$fieldType",
                 hookHandle,
                 hookId
             ))
+            add(exEndLabel)
 
             if (hook.targetField.type == "J" || hook.targetField.type == "D") {
                 add(InsnNode(Opcodes.DUP2_X1))
@@ -97,6 +107,17 @@ class FieldRedirectTransformer {
                 add(InsnNode(Opcodes.SWAP))
             }
             setHookRunning(hookId, false)
+            add(JumpInsnNode(Opcodes.GOTO, endLabel))
+
+            // Exception Handler code, it only catches user code.
+            // Rethrows the exception after clearing the running flag
+            // Stack: [Exception]
+
+            add(exHandlerLabel)
+            getLocalRunningHookArray()
+            setHookRunning(hookId, false)
+            add(InsnNode(Opcodes.ATHROW))
+
             add(endLabel)
         }
     }
