@@ -16,14 +16,6 @@ repositories {
     mavenCentral()
 }
 
-publishing {
-    publications {
-        create<MavenPublication>("release") {
-            from(components["java"])
-        }
-    }
-}
-
 dependencies {
     val asmVersion = "9.7"
     implementation("org.ow2.asm:asm:$asmVersion")
@@ -32,6 +24,14 @@ dependencies {
 
     testImplementation("net.bytebuddy:byte-buddy-agent:1.17.2")
     testImplementation(kotlin("test"))
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("release") {
+            from(components["java"])
+        }
+    }
 }
 
 sourceSets {
