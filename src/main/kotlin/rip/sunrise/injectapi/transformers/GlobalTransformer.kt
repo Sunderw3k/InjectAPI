@@ -4,12 +4,12 @@ import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.ClassNode
-import rip.sunrise.injectapi.InjectApi
 import rip.sunrise.injectapi.backends.Transformer
 import rip.sunrise.injectapi.debug.ClassDumper
 import rip.sunrise.injectapi.managers.HookManager
 import rip.sunrise.injectapi.utils.CustomClassWriter
 import rip.sunrise.injectapi.backends.TransformationBackend
+import java.util.WeakHashMap
 
 /**
  * The main transformer which adds hooks into classes.
@@ -20,7 +20,7 @@ import rip.sunrise.injectapi.backends.TransformationBackend
  * @see TransformationBackend.retransform
  */
 internal object GlobalTransformer : Transformer {
-    private val transformedClasses = mutableMapOf<String, ByteArray>()
+    private val transformedClasses = WeakHashMap<ClassLoader?, MutableMap<String, ByteArray>>()
 
     var errors = mutableListOf<Throwable>()
     var dumper: ClassDumper? = null
@@ -37,7 +37,9 @@ internal object GlobalTransformer : Transformer {
             if (HookManager.getHooks().none { it.clazz.name.replace(".", "/") == className }) return null
 
             // Load cached bytes, so that all previous hooks are removed
-            val classBytes = transformedClasses.getOrPut(className) { classfileBuffer }
+            val classBytes = transformedClasses
+                .getOrPut(loader) { mutableMapOf() }
+                .getOrPut(className) { classfileBuffer }
             val node = ClassReader(classBytes).let {
                 val node = ClassNode(Opcodes.ASM9)
                 it.accept(node, 0)
