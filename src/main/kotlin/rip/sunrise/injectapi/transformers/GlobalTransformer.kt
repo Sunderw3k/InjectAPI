@@ -4,6 +4,7 @@ import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.ClassNode
+import rip.sunrise.injectapi.InjectApi
 import rip.sunrise.injectapi.backends.Transformer
 import rip.sunrise.injectapi.debug.ClassDumper
 import rip.sunrise.injectapi.managers.HookManager
@@ -21,6 +22,7 @@ import rip.sunrise.injectapi.backends.TransformationBackend
 internal object GlobalTransformer : Transformer {
     private val transformedClasses = mutableMapOf<String, ByteArray>()
 
+    var errors = mutableListOf<Throwable>()
     var dumper: ClassDumper? = null
 
     override fun transform(
@@ -28,7 +30,6 @@ internal object GlobalTransformer : Transformer {
         className: String?,
         classfileBuffer: ByteArray
     ): ByteArray? {
-        // TODO: https://stackoverflow.com/questions/78421704/java-classfiletransformer-fails-to-throw-exception
         return runCatching {
             if (className == null) return null
 
@@ -59,6 +60,14 @@ internal object GlobalTransformer : Transformer {
             dumper?.dump(className, bytes)
 
             return@runCatching bytes
-        }.getOrElse { it.printStackTrace(); null }
+        }.getOrElse { errors.add(TransformationException(className, loader, it)); null }
     }
+}
+
+class TransformationException(
+    @Suppress("unused") val className: String?,
+    @Suppress("unused") val loader: ClassLoader?,
+    cause: Throwable?
+) : RuntimeException("Failed to transform $className (loader=$loader)", cause) {
+    override fun fillInStackTrace() = this
 }

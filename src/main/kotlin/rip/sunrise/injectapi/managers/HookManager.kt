@@ -49,8 +49,7 @@ object HookManager {
      */
     @InjectApi.Internal
     fun removeHook(hook: Hook) {
-        val hookId = getCachedHookId(hook)
-        hooks.removeAt(hookId)
+        hooks.remove(hook)
     }
 
     /**
