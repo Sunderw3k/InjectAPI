@@ -1,6 +1,7 @@
 package rip.sunrise.injectapi.global;
 
 import org.jetbrains.annotations.NotNull;
+import rip.sunrise.injectapi.annotations.ReferencedByName;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,18 +15,27 @@ public class Context {
     /**
      * Specifies the early return value returned right after the hook callback.
      */
+    @ReferencedByName(reason = "Fetched from hooks")
     public Object returnValue = null;
 
     /**
-     * Used in hooks to check if there is a return value.
+     * Used in hooks.
+     * @see Context#hasReturnValue()
      */
     private boolean hasReturnValue = false;
 
+    /**
+     * User-facing method to force an early return with the specified value.
+     */
     public void setReturnValue(Object value) {
         this.returnValue = value;
         this.hasReturnValue = true;
     }
 
+    /**
+     * Called from hooks to check whether there is a return value set.
+     */
+    @ReferencedByName(reason = "Called from hooks")
     public boolean hasReturnValue() {
         return hasReturnValue;
     }
@@ -34,7 +44,7 @@ public class Context {
      * Because this class is used as a bridge between hooks and hooked code, it is necessary to serialize the object into something both classloaders can understand.
      * To not lose ALL type information, a Map isn't the worst idea.
      */
-    @SuppressWarnings("unused")
+    @ReferencedByName(reason = "Called from hooks")
     public @NotNull Map<String, Object> serialize() {
         HashMap<String, Object> map = new HashMap<>();
 
@@ -47,7 +57,7 @@ public class Context {
     /**
      * Only static to make it easier to invoke from MethodHandles and bytecode.
      */
-    @SuppressWarnings({"unused"})
+    @ReferencedByName(reason = "Called from hooks and when transforming an InjectHook MethodHandle")
     public static @NotNull Context deserialize(@NotNull Map<String, Object> data) {
         Context ctx = new Context();
 

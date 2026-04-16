@@ -5,6 +5,7 @@ import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.*
 import rip.sunrise.injectapi.InjectApi
+import rip.sunrise.injectapi.global.Context
 import rip.sunrise.injectapi.hooks.inject.InjectHook
 import rip.sunrise.injectapi.hooks.inject.modes.HeadInjection
 import rip.sunrise.injectapi.hooks.inject.modes.InvokeInjection
@@ -99,7 +100,7 @@ class InjectTransformer {
         clazz: ClassNode,
         supportsInvokedynamic: Boolean
     ): InsnList {
-        val contextClass = "@CONTEXT@"
+        val contextClass = Type.getInternalName(Context::class.java)
         val hookId = HookManager.getCachedHookId(hook)
 
         val exStartLabel = LabelNode()

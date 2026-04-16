@@ -6,7 +6,7 @@ import java.lang.instrument.Instrumentation
 import java.security.ProtectionDomain
 
 class InstrumentationBackend(val inst: Instrumentation) : TransformationBackend {
-    val transformers = mutableMapOf<Transformer, ClassFileTransformer>()
+    private val transformers = mutableMapOf<Transformer, ClassFileTransformer>()
 
     private fun makeJavaTransformer(transformer: Transformer): ClassFileTransformer = object : ClassFileTransformer {
         override fun transform(

@@ -1,6 +1,7 @@
 import org.apache.tools.ant.filters.ReplaceTokens
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
+import refbyname.GenerateRefByNameRulesTask
 
 plugins {
     kotlin("jvm") version "2.0.0"
@@ -44,7 +45,6 @@ sourceSets {
 
 tasks {
     val tokens = mapOf(
-        "CONTEXT" to "rip/sunrise/injectapi/global/Context",
         "BOOTSTRAP" to "rip/sunrise/injectapi/global/ProxyDynamicFactory",
         "HOOK" to "rip/sunrise/injectapi/hooks/Hook",
         "HOOK_MANAGER" to "rip/sunrise/injectapi/managers/HookManager"
@@ -87,6 +87,20 @@ tasks {
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_21)
             languageVersion.set(KotlinVersion.KOTLIN_2_0)
+        }
+    }
+
+    val generateRefByNameRules = register<GenerateRefByNameRulesTask>("generateRefByNameRules") {
+        classDirs.from(
+            named("compileJava").map { it.outputs.files },
+            named("compileKotlin").map { it.outputs.files },
+        )
+        output.set(layout.buildDirectory.file("generated/proguard/ref-by-name.pro"))
+    }
+
+    processResources {
+        from(generateRefByNameRules.flatMap { it.output }) {
+            into("META-INF/proguard")
         }
     }
 
