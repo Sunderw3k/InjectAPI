@@ -11,6 +11,7 @@ import org.gradle.api.tasks.TaskAction
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
+import org.objectweb.asm.tree.AnnotationNode
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FieldNode
 import org.objectweb.asm.tree.MethodNode
@@ -27,22 +28,21 @@ abstract class GenerateRefByNameRulesTask : DefaultTask() {
 
     @TaskAction
     fun run() {
-        val rulesByClass = sortedMapOf<String, MutableSet<String>>()
+        val rulesByClass = sortedMapOf<String, MutableSet<Rule>>()
 
         classDirs.asFileTree.matching { include("**/*.class") }.forEach { file ->
             val node = ClassNode()
             ClassReader(file.readBytes()).accept(node, ClassReader.SKIP_CODE)
             val className = node.name.replace('/', '.')
 
-            node.methods.orEmpty().forEach { m ->
-                if (m.invisibleAnnotations.orEmpty().any { it.desc == ANNOTATION_DESC }) {
-                    rulesByClass.getOrPut(className) { sortedSetOf() } += m.toRule()
-                }
-            }
+            val members =
+                node.methods.orEmpty().map { it.invisibleAnnotations to it.toRuleString() } +
+                node.fields.orEmpty().map { it.invisibleAnnotations to it.toRuleString() }
 
-            node.fields.orEmpty().forEach { f ->
-                if (f.invisibleAnnotations.orEmpty().any { it.desc == ANNOTATION_DESC }) {
-                    rulesByClass.getOrPut(className) { sortedSetOf() } += f.toRule()
+            members.forEach { (annotations, ruleString) ->
+                annotations?.firstOrNull { it.desc == ANNOTATION_DESC }?.let { ann ->
+                    rulesByClass.getOrPut(className) { mutableSetOf() }
+                        .add(Rule(ruleString, ann.values[1] as String))
                 }
             }
         }
@@ -54,7 +54,10 @@ abstract class GenerateRefByNameRulesTask : DefaultTask() {
             appendLine()
             rulesByClass.forEach { (cls, rules) ->
                 appendLine("-keepclassmembers class $cls {")
-                rules.forEach { appendLine("    $it") }
+                rules.forEach { (rule, reason) ->
+                    appendLine("    # $reason")
+                    appendLine("    $rule")
+                }
                 appendLine("}")
                 appendLine()
             }
@@ -66,7 +69,9 @@ abstract class GenerateRefByNameRulesTask : DefaultTask() {
         }
     }
 
-    private fun MethodNode.toRule(): String {
+    data class Rule(val rule: String, val reason: String)
+
+    private fun MethodNode.toRuleString(): String {
         val isStatic = (access and Opcodes.ACC_STATIC) != 0
         val methodType = Type.getMethodType(desc)
         val params = methodType.argumentTypes.joinToString(", ") { it.className }
@@ -79,7 +84,7 @@ abstract class GenerateRefByNameRulesTask : DefaultTask() {
         }
     }
 
-    private fun FieldNode.toRule(): String {
+    private fun FieldNode.toRuleString(): String {
         val isStatic = (access and Opcodes.ACC_STATIC) != 0
         val type = Type.getType(desc).className
         return "${if (isStatic) "static " else ""}$type $name;"
