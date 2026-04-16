@@ -4,8 +4,8 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import refbyname.GenerateRefByNameRulesTask
 
 plugins {
-    kotlin("jvm") version "2.0.0"
-    id("io.github.goooler.shadow") version "8.1.8"
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.shadow)
     `maven-publish`
 }
 
@@ -18,10 +18,9 @@ repositories {
 }
 
 dependencies {
-    val asmVersion = "9.7"
-    implementation("org.ow2.asm:asm:$asmVersion")
-    implementation("org.ow2.asm:asm-commons:$asmVersion")
-    implementation("org.ow2.asm:asm-tree:$asmVersion")
+    implementation(libs.asm)
+    implementation(libs.asm.tree)
+    implementation(libs.asm.commons)
 
     testImplementation("net.bytebuddy:byte-buddy-agent:1.17.2")
     testImplementation(kotlin("test"))
@@ -105,11 +104,9 @@ tasks {
     }
 
     shadowJar {
-        isEnableRelocation = true
+        enableAutoRelocation = true
         relocationPrefix = "rip.sunrise.injectapi.shaded"
 
         relocate("kotlin", "kotlin")
     }
-
-    build.get().finalizedBy(shadowJar)
 }

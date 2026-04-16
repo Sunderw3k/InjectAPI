@@ -27,18 +27,6 @@ object InjectApi {
      * IMPORTANT: Call from the same ClassLoader which loaded HookManager, or any CL that resolves both of classes to the same one.
      */
     fun transform(transformationBackend: TransformationBackend) {
-//        val javaModule = ClassLoader::class.java.module
-//        val implAddExportsOrOpens = Module::class.java.getDeclaredMethod(
-//            "implAddExportsOrOpens",
-//            String::class.java,
-//            Module::class.java,
-//            Boolean::class.java,
-//            Boolean::class.java
-//        ).also {
-//            it.setAccessibleUnsafe(true)
-//        }
-//        implAddExportsOrOpens.invoke(javaModule, "java.lang", InjectApi::class.java.module, true, true)
-
         // Cache hooks
         @OptIn(Internal::class)
         val hookCount = HookManager.onTransform()

@@ -22,7 +22,7 @@ import java.util.WeakHashMap
 internal object GlobalTransformer : Transformer {
     private val transformedClasses = WeakHashMap<ClassLoader?, MutableMap<String, ByteArray>>()
 
-    var errors = mutableListOf<Throwable>()
+    val errors = mutableListOf<Throwable>()
     var dumper: ClassDumper? = null
 
     override fun transform(

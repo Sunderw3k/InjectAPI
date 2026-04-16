@@ -1,0 +1,13 @@
+[versions]
+kotlin-jvm = "2.3.20"
+shadow = "9.4.1"
+asm = "9.7"
+
+[libraries]
+asm = { group = "org.ow2.asm", name = "asm", version.ref = "asm" }
+asm-commons = { group = "org.ow2.asm", name = "asm-commons", version.ref = "asm" }
+asm-tree = { group = "org.ow2.asm", name = "asm-tree", version.ref = "asm" }
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin-jvm" }
+shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
