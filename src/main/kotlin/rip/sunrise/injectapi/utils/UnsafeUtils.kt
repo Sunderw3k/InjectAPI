@@ -13,7 +13,8 @@ fun getUnsafe(): Unsafe {
     return getUnsafeField().also { it.isAccessible = true }.get(null) as Unsafe
 }
 
-private fun getAccessibleFlagOffset(): Long {
+private val accessibleFlagOffset by lazy { computeAccessibleFlagOffset() }
+private fun computeAccessibleFlagOffset(): Long {
     val accessible = getUnsafeField().also { it.isAccessible = true }
     val inaccessible = getUnsafeField().also { it.isAccessible = false }
 
@@ -28,11 +29,11 @@ private fun getAccessibleFlagOffset(): Long {
 }
 
 fun Field.setAccessibleUnsafe(state: Boolean) {
-    getUnsafe().putBoolean(this, getAccessibleFlagOffset(), state)
+    getUnsafe().putBoolean(this, accessibleFlagOffset, state)
 }
 
 fun Method.setAccessibleUnsafe(state: Boolean) {
-    getUnsafe().putBoolean(this, getAccessibleFlagOffset(), state)
+    getUnsafe().putBoolean(this, accessibleFlagOffset, state)
 }
 
 fun defineClass(bytes: ByteArray, classLoader: ClassLoader?, protectionDomain: ProtectionDomain?) {
